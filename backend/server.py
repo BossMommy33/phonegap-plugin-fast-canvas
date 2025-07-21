@@ -212,6 +212,42 @@ class PayoutRecord(BaseModel):
     requested_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
 
+# Advanced Analytics Models
+class UserAnalytics(BaseModel):
+    registration_trends: List[dict]
+    subscription_conversion_rate: float
+    user_retention_rate: float
+    top_referrers: List[dict]
+    user_activity_heatmap: List[dict]
+
+class MessageAnalytics(BaseModel):
+    creation_patterns: List[dict]
+    delivery_success_rate: float
+    popular_times: List[dict]
+    message_type_distribution: List[dict]
+    recurring_vs_oneshot: dict
+
+class RevenueAnalytics(BaseModel):
+    mrr_trend: List[dict]  # Monthly Recurring Revenue
+    arpu: float  # Average Revenue Per User
+    churn_rate: float
+    subscription_growth_rate: float
+    revenue_by_plan: List[dict]
+
+class AIAnalytics(BaseModel):
+    feature_usage: List[dict]
+    generation_success_rate: float
+    popular_prompts: List[dict]
+    enhancement_types: List[dict]
+    ai_adoption_rate: float
+
+class AdvancedAnalytics(BaseModel):
+    user_analytics: UserAnalytics
+    message_analytics: MessageAnalytics
+    revenue_analytics: RevenueAnalytics
+    ai_analytics: AIAnalytics
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+
 # Utility Functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
