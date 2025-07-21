@@ -940,12 +940,18 @@ async def request_payout(payout_request: PayoutRequest, current_admin: User = De
         
         actual_available = available_balance - pending_payouts_total
         
-        if payout_request.amount > actual_available:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Nicht genügend Guthaben verfügbar. Verfügbar: €{actual_available:.2f}"
-            )
-        
+    except Exception as e:
+        logger.error(f"Error calculating payout balance: {e}")
+        raise HTTPException(status_code=500, detail="Fehler bei der Berechnung des verfügbaren Guthabens")
+    
+    # Check balance outside try-catch to allow HTTPException to propagate
+    if payout_request.amount > actual_available:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Nicht genügend Guthaben verfügbar. Verfügbar: €{actual_available:.2f}"
+        )
+    
+    try:
         # Create payout record
         payout = PayoutRecord(
             admin_user_id=current_admin.id,
@@ -973,7 +979,7 @@ async def request_payout(payout_request: PayoutRequest, current_admin: User = De
         }
         
     except Exception as e:
-        logger.error(f"Error requesting payout: {e}")
+        logger.error(f"Error creating payout: {e}")
         raise HTTPException(status_code=500, detail="Fehler bei der Auszahlungsanforderung")
 
 @api_router.get("/admin/payouts")
