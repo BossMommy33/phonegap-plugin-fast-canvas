@@ -112,10 +112,20 @@ const useAuth = () => {
 // Login/Register Component
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
+  const [formData, setFormData] = useState({ email: '', password: '', name: '', referralCode: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, register } = useAuth();
+
+  useEffect(() => {
+    // Check for referral code in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      setFormData(prev => ({ ...prev, referralCode: refCode }));
+      setIsLogin(false); // Switch to registration for referrals
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -126,7 +136,7 @@ const AuthPage = () => {
       if (isLogin) {
         await login(formData.email, formData.password);
       } else {
-        await register(formData.email, formData.password, formData.name);
+        await register(formData.email, formData.password, formData.name, formData.referralCode);
       }
     } catch (error) {
       setError(error.response?.data?.detail || 'Ein Fehler ist aufgetreten');
