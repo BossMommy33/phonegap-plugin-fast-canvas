@@ -16,7 +16,7 @@ import bcrypt
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
-from openai import OpenAI
+from emergentintegrations.ai.openai.chat import OpenAIChat, ChatMessage, ChatResponse
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -39,7 +39,7 @@ stripe_api_key = os.environ.get('STRIPE_API_KEY')
 
 # OpenAI
 openai_api_key = os.environ.get('OPENAI_API_KEY')
-openai_client = OpenAI(api_key=openai_api_key) if openai_api_key else None
+openai_client = OpenAIChat(api_key=openai_api_key) if openai_api_key else None
 
 # Background task flag
 scheduler_running = False
