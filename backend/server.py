@@ -616,6 +616,30 @@ async def login(user: UserLogin):
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
     return await get_user_response(current_user)
 
+@api_router.get("/auth/referrals")
+async def get_user_referrals(current_user: User = Depends(get_current_user)):
+    """Get user's referral statistics"""
+    try:
+        # Get referred users
+        referred_users = await db.users.find(
+            {"referred_by": current_user.referral_code},
+            {"name": 1, "email": 1, "subscription_plan": 1, "created_at": 1, "_id": 0}
+        ).sort("created_at", -1).to_list(100)
+        
+        # Calculate bonus messages earned
+        bonus_messages = len(referred_users) * 5
+        
+        return {
+            "referral_code": current_user.referral_code,
+            "total_referrals": len(referred_users),
+            "bonus_messages_earned": bonus_messages,
+            "referred_users": referred_users,
+            "referral_link": f"https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref={current_user.referral_code}"
+        }
+    except Exception as e:
+        logger.error(f"Error getting referrals: {e}")
+        raise HTTPException(status_code=500, detail="Fehler beim Laden der Referrals")
+
 # Subscription endpoints
 @api_router.get("/subscriptions/plans")
 async def get_subscription_plans():
