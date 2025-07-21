@@ -980,11 +980,11 @@ async def request_payout(payout_request: PayoutRequest, current_admin: User = De
 async def get_payout_history(current_admin: User = Depends(get_current_admin)):
     """Get payout history for admin"""
     try:
-        payouts = await db.payout_records.find({}).sort("requested_at", -1).to_list(1000)
+        payouts = await db.payout_records.find({}, {"_id": 0}).sort("requested_at", -1).to_list(1000)
         
         # Add admin user information
         for payout in payouts:
-            admin_user = await db.users.find_one({"id": payout["admin_user_id"]}, {"email": 1, "name": 1})
+            admin_user = await db.users.find_one({"id": payout["admin_user_id"]}, {"email": 1, "name": 1, "_id": 0})
             if admin_user:
                 payout["admin_email"] = admin_user["email"]
                 payout["admin_name"] = admin_user["name"]
