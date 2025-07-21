@@ -37,6 +37,10 @@ security = HTTPBearer()
 # Stripe
 stripe_api_key = os.environ.get('STRIPE_API_KEY')
 
+# OpenAI
+openai_api_key = os.environ.get('OPENAI_API_KEY')
+openai_client = OpenAI(api_key=openai_api_key) if openai_api_key else None
+
 # Background task flag
 scheduler_running = False
 
