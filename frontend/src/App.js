@@ -27,7 +27,17 @@ import {
   Settings,
   Share,
   Gift,
-  Copy
+  Copy,
+  BarChart3,
+  PieChart,
+  LineChart,
+  Activity,
+  Target,
+  Zap,
+  Brain,
+  Eye,
+  Filter,
+  Archive
 } from "lucide-react";
 import "./App.css";
 import axios from "axios";
