@@ -170,19 +170,40 @@ const AuthPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ihr Name"
-                required
-              />
-            </div>
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ihr Name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Referral-Code (optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.referralCode}
+                  onChange={(e) => setFormData({...formData, referralCode: e.target.value.toUpperCase()})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Z.B. ABC123XY"
+                  maxLength="8"
+                />
+                {formData.referralCode && (
+                  <p className="text-xs text-green-600 mt-1">
+                    🎁 Sie erhalten 5 Bonus-Nachrichten bei der Registrierung!
+                  </p>
+                )}
+              </div>
+            </>
           )}
           
           <div>
