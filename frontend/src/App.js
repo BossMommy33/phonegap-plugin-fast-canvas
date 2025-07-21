@@ -303,7 +303,7 @@ const AuthPage = () => {
             disabled={loading}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
           >
-            {loading ? 'Wird verarbeitet...' : (isLogin ? 'Anmelden' : 'Registrieren')}
+            {loading ? t('action.loading') : (isLogin ? t('auth.loginButton') : t('auth.registerButton'))}
           </button>
         </form>
 
@@ -312,7 +312,7 @@ const AuthPage = () => {
             onClick={() => setIsLogin(!isLogin)}
             className="text-blue-500 hover:text-blue-600"
           >
-            {isLogin ? 'Noch kein Account? Registrieren' : 'Bereits registriert? Anmelden'}
+            {isLogin ? t('auth.switchToRegister') : t('auth.switchToLogin')}
           </button>
         </div>
       </div>
