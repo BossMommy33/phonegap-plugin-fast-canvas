@@ -24,7 +24,7 @@
 #### Tag -3: BETA-TESTER
 - [ ] **10 Freunde/Familie einladen**
   - [ ] WhatsApp-Gruppe "Beta Tester" erstellen
-  - [ ] Referral-Links teilen: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+  - [ ] Referral-Links teilen: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
   - [ ] Feedback sammeln und umsetzen
   - [ ] Testimonials anfragen
 

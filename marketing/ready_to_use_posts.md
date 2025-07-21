@@ -13,7 +13,7 @@ Perfekt für Leute wie mich, die ständig wichtige Sachen vergessen 😅
 
 Man kann 5 Nachrichten kostenlos testen und die KI schreibt richtig höflich auf Deutsch.
 
-Falls du Lust hast: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+Falls du Lust hast: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Wenn du dich anmeldest, bekommen wir beide 5 Bonus-Nachrichten! 🎁
 
@@ -34,7 +34,7 @@ Super für:
 
 Die KI versteht deutschen Business-Kontext und formuliert richtig professionell.
 
-5 Nachrichten gratis: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+5 Nachrichten gratis: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Könnte für dein Business interessant sein! 💼
 ```
@@ -47,7 +47,7 @@ Könnte für dein Business interessant sein! 💼
 ✅ 5 Nachrichten gratis
 ✅ Wir beide bekommen Bonus bei Anmeldung
 
-Link: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+Link: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Probier's aus! 🚀
 ```
@@ -71,7 +71,7 @@ Was die KI automatisch erstellt:
 🎁 LAUNCH-SPECIAL: 5 Nachrichten GRATIS testen!
 💎 Premium: Nur €9,99/Monat für unbegrenzte KI-Nachrichten
 
-👉 Jetzt starten: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+👉 Jetzt starten: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 #KINachrichten #Deutschland #Produktivität #NieWiederVergessen #Innovation #KI #Automatisierung
 ```
@@ -91,7 +91,7 @@ Was die KI automatisch erstellt:
 • Kulturell angemessen
 
 Teste 5 Nachrichten KOSTENLOS! ⬇️
-https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 #DeutscheKI #BusinessKommunikation #Höflichkeit #Qualität #MadeInGermany
 ```
@@ -112,7 +112,7 @@ Das bedeutet:
 
 Hol dir deinen Referral-Link und sammle Bonus-Nachrichten! 
 
-👉 https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+👉 https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 #FreundeEinladen #Bonus #Empfehlung #Gemeinsam #Deutschland
 ```
@@ -138,7 +138,7 @@ Die erste deutsche KI-Nachrichten-App, die den Unterschied zwischen "Sie" und "D
 • Team-Updates zeitgesteuert versenden
 • Nie wieder Projekt-Deadlines vergessen
 
-5 Nachrichten kostenlos testen: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+5 Nachrichten kostenlos testen: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Welche Tools nutzt ihr für automatisierte Kommunikation?
 
@@ -171,7 +171,7 @@ Meeting-Nachfassung:
 
 Resultat: 40% höhere Antwortquoten bei Kunden.
 
-Teste deutsche KI kostenlos: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+Teste deutsche KI kostenlos: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Wie wichtig ist euch kultureller Kontext bei Business-Tools?
 
@@ -226,7 +226,7 @@ Warum? Deutsche schätzen angemessene, respektvolle Ansprache.
 7/8 🎯 BETA-TESTER GESUCHT:
 Wer testet deutsche KI-Qualität vs internationale Tools?
 
-Link: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+Link: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Feedback ist Gold wert! 🙏
 
@@ -244,7 +244,7 @@ Tweet 1:
 
 Nie wieder peinliche Kommunikation mit Kunden. 
 
-5 Nachrichten gratis testen: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+5 Nachrichten gratis testen: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 #DeutscheKI #Business
 
@@ -255,7 +255,7 @@ Tweet 2:
 
 So sollte Empfehlungsmarketing funktionieren. Fair für alle.
 
-https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 #Referral #Fair
 
@@ -266,7 +266,7 @@ Tweet 3:
 
 Warum? Kultureller Kontext ist wichtiger als gedacht.
 
-Kostenlos testen: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+Kostenlos testen: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 #KI #Deutschland
 ```
@@ -285,7 +285,7 @@ Kostenlos testen: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergenta
 📱 [Telefon] | ✉️ [Email] 
 
 🤖 NEU: Teste deutsche KI für automatische Erinnerungen
-5 Nachrichten gratis: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+5 Nachrichten gratis: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 ```
 
 ### Privat:
@@ -294,7 +294,7 @@ Beste Grüße,
 [Dein Name]
 
 P.S.: Kennst du schon deutsche KI für Erinnerungen? 5 gratis testen: 
-https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001 🤖
+https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001 🤖
 ```
 
 ---
@@ -414,7 +414,7 @@ Interesse? Dann melden wir uns gerne!
 Beste Grüße,
 [NAME]
 
-P.S.: Kostenlos testen: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+P.S.: Kostenlos testen: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 ```
 
 ---

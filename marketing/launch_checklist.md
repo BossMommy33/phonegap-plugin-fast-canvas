@@ -83,7 +83,7 @@ Was unsere KI automatisch erstellt:
 🎂 "Heute hat Maria Geburtstag - rufen Sie sie an!"
 💊 "Zeit für Ihre Medikamente"
 
-🎁 5 NACHRICHTEN GRATIS: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+🎁 5 NACHRICHTEN GRATIS: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 #KINachrichten #Deutschland #Launch #Innovation"
 
@@ -111,7 +111,7 @@ Was ChatGPT nicht kann, aber deutsche KI perfekt beherrscht: 'Sie' und 'Du' unte
 Deutsche KI die automatisch höfliche Erinnerungen erstellt. Perfekt für vergessliche Leute wie mich 😅
 
 5 Nachrichten kann man kostenlos testen:
-https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Falls du dich anmeldest, bekommen wir beide 5 Bonus-Nachrichten! 🎁
 
@@ -158,7 +158,7 @@ DESHALB:
 ✅ Nie wieder vergessene Termine oder Follow-ups
 
 SPECIAL FÜR DICH:
-5 Nachrichten gratis testen: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+5 Nachrichten gratis testen: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Als Early Adopter bekommst du:
 🎁 5 Bonus-Nachrichten bei Anmeldung

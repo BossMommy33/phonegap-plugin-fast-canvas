@@ -23,7 +23,7 @@ Unsere KI erstellt automatisch perfekte Erinnerungen:
 🎁 LAUNCH-BONUS: 5 Nachrichten GRATIS testen!
 💎 Premium: Nur €9,99/Monat für unbegrenzte KI-Nachrichten
 
-👉 Jetzt starten: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com
+👉 Jetzt starten: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com
 
 #KINachrichten #Deutschland #Produktivität #Launch
 ```
@@ -44,7 +44,7 @@ Das bedeutet:
 
 Teile jetzt deinen persönlichen Link und sammle Bonus-Nachrichten! 
 
-👉 https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+👉 https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 #FreundeEinladen #Bonus #Deutschland #KI
 ```
@@ -63,7 +63,7 @@ Teile jetzt deinen persönlichen Link und sammle Bonus-Nachrichten!
 
 Teste jetzt 5 Nachrichten KOSTENLOS!
 
-👉 https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com
+👉 https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com
 
 #DeutscheKI #BusinessDeutschland #Höflichkeit
 ```
@@ -133,7 +133,7 @@ Wir sind gerade live gegangen und suchen die ersten 1.000 deutschen Beta-Nutzer.
 Feedback ist Gold wert für uns als deutsches Startup!
 
 7/7 👉 Jetzt testen (5 Nachrichten gratis):
-https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 RT wenn ihr deutsche KI-Innovation unterstützt! 🇩🇪🚀
 
@@ -176,7 +176,7 @@ BUSINESS-PLAN FEATURES:
 📈 Usage Statistics
 
 Beta-Test (5 Nachrichten gratis):
-https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com
+https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com
 
 Welche KI-Tools nutzt ihr für euer Business?
 
@@ -194,7 +194,7 @@ Welche KI-Tools nutzt ihr für euer Business?
 Nie wieder Geburtstage vergessen oder Termine verpassen 😅
 
 5 Nachrichten kann man kostenlos testen:
-https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Falls du dich anmeldest, bekommen wir beide 5 Bonus-Nachrichten! 🎁
 
@@ -216,7 +216,7 @@ Perfekt für:
 Formuliert super höflich und professionell auf Deutsch.
 
 5 Nachrichten gratis testen:
-https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref=ADMIN001
+https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref=ADMIN001
 
 Könnte für dein Business interessant sein! 💼
 ```
@@ -249,7 +249,7 @@ Premium ab €9,99/Monat für unbegrenzte Nachrichten.
 
 BONUS: Freunde einladen = beide bekommen 5 extra Nachrichten!
 
-Link: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com
+Link: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com
 
 Was haltet ihr von deutscher KI vs. internationale Lösungen? 🤔
 
@@ -288,7 +288,7 @@ PRICING:
 
 BONUS: Refer friends → both get 5 bonus messages
 
-Try it: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com
+Try it: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com
 
 Anyone else frustrated with AI that doesn't understand local context? 🤔
 ```
@@ -313,7 +313,7 @@ Neue App löst Problem, das jeder Unternehmer kennt: Vergessene Follow-ups!
 🔗 API-Integration
 👥 Team-Management
 
-Kostenlos testen: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com
+Kostenlos testen: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com
 
 Feedback von deutschen Unternehmern sehr willkommen! 🙏
 

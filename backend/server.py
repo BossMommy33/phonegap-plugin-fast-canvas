@@ -634,7 +634,7 @@ async def get_user_referrals(current_user: User = Depends(get_current_user)):
             "total_referrals": len(referred_users),
             "bonus_messages_earned": bonus_messages,
             "referred_users": referred_users,
-            "referral_link": f"https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com?ref={current_user.referral_code}"
+            "referral_link": f"https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com?ref={current_user.referral_code}"
         }
     except Exception as e:
         logger.error(f"Error getting referrals: {e}")

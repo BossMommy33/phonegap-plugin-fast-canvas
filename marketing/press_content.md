@@ -48,7 +48,7 @@ Für 2025 plant das Startup die Integration von E-Mail- und SMS-Funktionalitäte
 
 **VERFÜGBARKEIT**
 
-Die Web-App ist ab sofort unter https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com verfügbar.
+Die Web-App ist ab sofort unter https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com verfügbar.
 
 **ÜBER ZEITGESTEUERTE NACHRICHTEN**
 

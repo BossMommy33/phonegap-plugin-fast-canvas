@@ -15,7 +15,7 @@
 └── 📈 Conversion Rate: 0% (wird live berechnet)
 
 🔑 ADMIN-ZUGANG:
-├── URL: https://a857e462-d544-4b56-ac8c-342f09005c20.preview.emergentagent.com
+├── URL: https://39f27297-0805-40a9-a015-5c2e4d6584e8.preview.emergentagent.com
 ├── Login: admin@zeitgesteuerte.de / admin123
 ├── Rolle: Business (alle Features)
 └── Referral: ADMIN001
