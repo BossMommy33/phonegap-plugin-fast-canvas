@@ -446,6 +446,37 @@ const Dashboard = () => {
     }
   };
 
+  // Fetch referral data
+  const fetchReferralData = async () => {
+    try {
+      const response = await axios.get(`${API}/auth/referrals`);
+      setReferralData(response.data);
+    } catch (error) {
+      console.error('Error fetching referral data:', error);
+    }
+  };
+
+  // Copy referral link
+  const copyReferralLink = async () => {
+    if (referralData?.referral_link) {
+      try {
+        await navigator.clipboard.writeText(referralData.referral_link);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      } catch (error) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = referralData.referral_link;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      }
+    }
+  };
+
   // Request payout
   const requestPayout = async () => {
     const amount = parseFloat(payoutAmount);
