@@ -38,8 +38,7 @@ security = HTTPBearer()
 stripe_api_key = os.environ.get('STRIPE_API_KEY')
 
 # OpenAI
-openai_api_key = os.environ.get('OPENAI_API_KEY')
-openai_client = OpenAIChat(api_key=openai_api_key) if openai_api_key else None
+openai_client = OpenAIChat() # Uses system OpenAI key
 
 # Background task flag
 scheduler_running = False
