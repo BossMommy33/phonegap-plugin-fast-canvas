@@ -509,6 +509,7 @@ const Dashboard = () => {
   useEffect(() => {
     fetchMessages();
     fetchSubscriptionPlans();
+    fetchAiSuggestions();
     // Refresh messages every 10 seconds to show delivered messages
     const interval = setInterval(fetchMessages, 10000);
     return () => clearInterval(interval);
