@@ -37,10 +37,12 @@ import {
   Brain,
   Eye,
   Filter,
-  Archive
+  Archive,
+  Globe
 } from "lucide-react";
 import "./App.css";
 import axios from "axios";
+import { useTranslation, LanguageContext } from "./translations";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
