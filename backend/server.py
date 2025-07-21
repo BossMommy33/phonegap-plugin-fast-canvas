@@ -827,7 +827,189 @@ async def delete_message(message_id: str, current_user: User = Depends(get_curre
         raise HTTPException(status_code=404, detail="Message not found")
     return {"message": "Message deleted successfully"}
 
-# Analytics (Business only)
+# Admin endpoints
+@api_router.get("/admin/stats", response_model=AdminStats)
+async def get_admin_stats(current_admin: User = Depends(get_current_admin)):
+    """Get comprehensive admin statistics"""
+    try:
+        # User statistics
+        total_users = await db.users.count_documents({})
+        premium_users = await db.users.count_documents({"subscription_plan": "premium"})
+        business_users = await db.users.count_documents({"subscription_plan": "business"})
+        
+        # Revenue statistics
+        total_revenue = 0.0
+        monthly_revenue = 0.0
+        
+        # Get all completed transactions
+        completed_transactions = await db.payment_transactions.find({"payment_status": "completed"}).to_list(1000)
+        total_revenue = sum(t.get("amount", 0) for t in completed_transactions)
+        
+        # Calculate current month revenue
+        current_month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        monthly_transactions = await db.payment_transactions.find({
+            "payment_status": "completed",
+            "completed_at": {"$gte": current_month_start}
+        }).to_list(1000)
+        monthly_revenue = sum(t.get("amount", 0) for t in monthly_transactions)
+        
+        # Message statistics
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        messages_sent_today = await db.scheduled_messages.count_documents({
+            "status": "delivered",
+            "delivered_at": {"$gte": today_start}
+        })
+        
+        messages_sent_month = await db.scheduled_messages.count_documents({
+            "status": "delivered",
+            "delivered_at": {"$gte": current_month_start}
+        })
+        
+        # Mock Stripe balance (in real app, get from Stripe API)
+        available_balance = total_revenue * 0.85  # Simulate 85% available after fees
+        pending_payouts = await db.payout_records.aggregate([
+            {"$match": {"status": "pending"}},
+            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+        ]).to_list(1)
+        pending_payouts = pending_payouts[0]["total"] if pending_payouts else 0.0
+        
+        return AdminStats(
+            total_users=total_users,
+            premium_users=premium_users,
+            business_users=business_users,
+            total_revenue=total_revenue,
+            monthly_revenue=monthly_revenue,
+            messages_sent_today=messages_sent_today,
+            messages_sent_month=messages_sent_month,
+            available_balance=available_balance,
+            pending_payouts=pending_payouts
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting admin stats: {e}")
+        raise HTTPException(status_code=500, detail="Fehler beim Laden der Statistiken")
+
+@api_router.get("/admin/users")
+async def get_all_users(current_admin: User = Depends(get_current_admin)):
+    """Get all users (admin only)"""
+    try:
+        users = await db.users.find({}, {"hashed_password": 0}).sort("created_at", -1).to_list(1000)
+        return {"users": users}
+    except Exception as e:
+        logger.error(f"Error getting users: {e}")
+        raise HTTPException(status_code=500, detail="Fehler beim Laden der Benutzer")
+
+@api_router.get("/admin/transactions")
+async def get_all_transactions(current_admin: User = Depends(get_current_admin)):
+    """Get all payment transactions (admin only)"""
+    try:
+        transactions = await db.payment_transactions.find({}).sort("created_at", -1).to_list(1000)
+        
+        # Add user information to transactions
+        for transaction in transactions:
+            user = await db.users.find_one({"id": transaction["user_id"]}, {"email": 1, "name": 1})
+            if user:
+                transaction["user_email"] = user["email"]
+                transaction["user_name"] = user["name"]
+        
+        return {"transactions": transactions}
+    except Exception as e:
+        logger.error(f"Error getting transactions: {e}")
+        raise HTTPException(status_code=500, detail="Fehler beim Laden der Transaktionen")
+
+@api_router.post("/admin/payout")
+async def request_payout(payout_request: PayoutRequest, current_admin: User = Depends(get_current_admin)):
+    """Request a payout to admin's bank account"""
+    try:
+        # Get available balance
+        completed_transactions = await db.payment_transactions.find({"payment_status": "completed"}).to_list(1000)
+        total_revenue = sum(t.get("amount", 0) for t in completed_transactions)
+        available_balance = total_revenue * 0.85  # After Stripe fees
+        
+        # Get pending payouts
+        pending_payouts = await db.payout_records.aggregate([
+            {"$match": {"status": "pending"}},
+            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+        ]).to_list(1)
+        pending_payouts_total = pending_payouts[0]["total"] if pending_payouts else 0.0
+        
+        actual_available = available_balance - pending_payouts_total
+        
+        if payout_request.amount > actual_available:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Nicht genügend Guthaben verfügbar. Verfügbar: €{actual_available:.2f}"
+            )
+        
+        # Create payout record
+        payout = PayoutRecord(
+            admin_user_id=current_admin.id,
+            amount=payout_request.amount,
+            description=payout_request.description
+        )
+        
+        await db.payout_records.insert_one(payout.dict())
+        
+        # In a real implementation, you would call Stripe's Payout API here
+        # stripe_payout = stripe.Payout.create(
+        #     amount=int(payout_request.amount * 100),  # Convert to cents
+        #     currency='eur',
+        #     description=payout_request.description
+        # )
+        
+        # For now, simulate successful payout after 5 minutes
+        # In production, this would be handled by Stripe webhooks
+        
+        return {
+            "message": "Auszahlung wurde angefordert",
+            "payout_id": payout.id,
+            "amount": payout_request.amount,
+            "status": "pending"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error requesting payout: {e}")
+        raise HTTPException(status_code=500, detail="Fehler bei der Auszahlungsanforderung")
+
+@api_router.get("/admin/payouts")
+async def get_payout_history(current_admin: User = Depends(get_current_admin)):
+    """Get payout history for admin"""
+    try:
+        payouts = await db.payout_records.find({}).sort("requested_at", -1).to_list(1000)
+        
+        # Add admin user information
+        for payout in payouts:
+            admin_user = await db.users.find_one({"id": payout["admin_user_id"]}, {"email": 1, "name": 1})
+            if admin_user:
+                payout["admin_email"] = admin_user["email"]
+                payout["admin_name"] = admin_user["name"]
+        
+        return {"payouts": payouts}
+    except Exception as e:
+        logger.error(f"Error getting payouts: {e}")
+        raise HTTPException(status_code=500, detail="Fehler beim Laden der Auszahlungen")
+
+@api_router.put("/admin/users/{user_id}/role")
+async def update_user_role(user_id: str, role_data: dict, current_admin: User = Depends(get_current_admin)):
+    """Update user role (admin only)"""
+    try:
+        new_role = role_data.get("role")
+        if new_role not in ["user", "admin"]:
+            raise HTTPException(status_code=400, detail="Ungültige Rolle")
+        
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"role": new_role}}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Benutzer nicht gefunden")
+        
+        return {"message": f"Benutzerrolle auf {new_role} geändert"}
+        
+    except Exception as e:
+        logger.error(f"Error updating user role: {e}")
+        raise HTTPException(status_code=500, detail="Fehler beim Aktualisieren der Benutzerrolle")
 @api_router.get("/analytics")
 async def get_analytics(current_user: User = Depends(get_current_user)):
     if current_user.subscription_plan != "business":
