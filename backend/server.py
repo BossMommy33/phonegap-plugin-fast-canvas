@@ -609,7 +609,7 @@ async def login(user: UserLogin):
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=get_user_response(user_obj)
+        user=await get_user_response(user_obj)
     )
 
 @api_router.get("/auth/me", response_model=UserResponse)
