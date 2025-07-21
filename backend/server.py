@@ -103,6 +103,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     name: str
+    role: str
     subscription_plan: str
     subscription_status: str
     monthly_messages_used: int
