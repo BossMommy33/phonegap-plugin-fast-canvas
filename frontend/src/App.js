@@ -126,6 +126,52 @@ const useAuth = () => {
   return context;
 };
 
+// Language Provider Component
+const LanguageProvider = ({ children }) => {
+  const [language, setLanguage] = useState(() => {
+    // Get language from localStorage or default to German
+    const savedLang = localStorage.getItem('language');
+    return savedLang || 'de';
+  });
+
+  const { t } = useTranslation(language);
+
+  const switchLanguage = (newLang) => {
+    setLanguage(newLang);
+    localStorage.setItem('language', newLang);
+  };
+
+  const value = {
+    language,
+    setLanguage: switchLanguage,
+    t
+  };
+
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+// Language Switcher Component
+const LanguageSwitcher = () => {
+  const { language, setLanguage, t } = useContext(LanguageContext);
+  
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
+        className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+        title={t('lang.switch')}
+      >
+        <Globe className="w-4 h-4" />
+        <span>{language === 'de' ? t('lang.german') : t('lang.english')}</span>
+      </button>
+    </div>
+  );
+};
+
 // Login/Register Component
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
