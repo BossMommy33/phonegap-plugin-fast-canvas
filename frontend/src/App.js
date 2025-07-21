@@ -179,6 +179,7 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, register } = useAuth();
+  const { t } = useContext(LanguageContext);
 
   useEffect(() => {
     // Check for referral code in URL
@@ -202,7 +203,7 @@ const AuthPage = () => {
         await register(formData.email, formData.password, formData.name, formData.referralCode);
       }
     } catch (error) {
-      setError(error.response?.data?.detail || 'Ein Fehler ist aufgetreten');
+      setError(error.response?.data?.detail || t('message.error'));
     } finally {
       setLoading(false);
     }
