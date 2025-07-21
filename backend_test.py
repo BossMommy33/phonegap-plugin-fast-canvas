@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend Testing for Premium Subscription System
-Tests authentication, subscription management, message limits, Stripe integration, and analytics
+Comprehensive Backend Testing for AI-Enhanced Premium Subscription System
+Tests authentication, subscription management, message limits, Stripe integration, analytics, and AI features
 """
 
 import requests
