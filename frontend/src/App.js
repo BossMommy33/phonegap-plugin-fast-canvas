@@ -376,43 +376,43 @@ const Header = ({ activeTab, setActiveTab }) => {
                     <div className="mt-2">
                       <div className="text-xs text-gray-500">{t('plans.messagesUsed')}</div>
                       <div className="text-sm font-medium">
-                      {user.monthly_messages_limit === -1 ? 
-                        `${user.monthly_messages_used} (Unbegrenzt)` :
-                        `${user.monthly_messages_used} / ${user.monthly_messages_limit}`
-                      }
+                        {user.monthly_messages_limit === -1 ? 
+                          `${user.monthly_messages_used} (${t('plans.unlimited')})` :
+                          `${user.monthly_messages_used} / ${user.monthly_messages_limit}`
+                        }
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="p-2">
-                  <button
-                    onClick={() => {
-                      setActiveTab('subscription');
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full flex items-center space-x-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    <span>Abo-Verwaltung</span>
-                  </button>
-                  {user.role === 'admin' && (
+                  <div className="p-2">
                     <button
                       onClick={() => {
-                        setActiveTab('admin');
+                        setActiveTab('subscription');
                         setShowUserMenu(false);
                       }}
-                      className="w-full flex items-center space-x-2 px-3 py-2 text-left text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                     >
-                      <Shield className="w-4 h-4" />
-                      <span>Admin Panel</span>
+                      <CreditCard className="w-4 h-4" />
+                      <span>{t('nav.subscription')}</span>
                     </button>
-                  )}
-                  <button
-                    onClick={logout}
-                    className="w-full flex items-center space-x-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Abmelden</span>
-                  </button>
+                    {user.role === 'admin' && (
+                      <button
+                        onClick={() => {
+                          setActiveTab('admin');
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center space-x-2 px-3 py-2 text-left text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      >
+                        <Shield className="w-4 h-4" />
+                        <span>{t('nav.admin')}</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={logout}
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>{t('auth.logout')}</span>
+                    </button>
                 </div>
               </div>
             )}
