@@ -696,7 +696,7 @@ async def get_ai_suggestions(current_user: User = Depends(get_current_user)):
     """Get AI-powered message suggestions based on user plan"""
     suggestions = await get_message_suggestions(current_user.subscription_plan)
     return {"suggestions": suggestions, "ai_available": openai_client is not None}
-@api_router.post("/messages", response_model=ScheduledMessageResponse)
+# Enhanced Message endpoints
 async def create_scheduled_message(message: ScheduledMessageCreate, current_user: User = Depends(get_current_user)):
     # Check message limit
     if not await check_message_limit(current_user):
