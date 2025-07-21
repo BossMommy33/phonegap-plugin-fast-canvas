@@ -124,6 +124,23 @@ class ScheduledMessageCreate(BaseModel):
     is_recurring: bool = False
     recurring_pattern: Optional[str] = None
 
+# AI Models
+class AIGenerateRequest(BaseModel):
+    prompt: str
+    tone: Optional[str] = "freundlich"  # freundlich, professionell, humorvoll
+    occasion: Optional[str] = None  # meeting, geburtstag, erinnerung, etc.
+
+class AIEnhanceRequest(BaseModel):
+    text: str
+    action: str  # improve, correct, shorten, lengthen, translate
+    target_language: Optional[str] = "deutsch"
+    tone: Optional[str] = "freundlich"
+
+class AIResponse(BaseModel):
+    generated_text: str
+    success: bool
+    error: Optional[str] = None
+
 class ScheduledMessageResponse(BaseModel):
     id: str
     title: str
