@@ -952,8 +952,8 @@ class PremiumSubscriptionTester:
                     print(f"   Error deleting message {message_id}: {e}")
     
     def run_all_tests(self):
-        """Run all premium subscription system tests"""
-        print("🚀 Starting Premium Subscription System Tests\n")
+        """Run all premium subscription system tests including AI features"""
+        print("🚀 Starting AI-Enhanced Premium Subscription System Tests\n")
         
         # Test sequence
         tests = [
@@ -969,6 +969,13 @@ class PremiumSubscriptionTester:
             ("Message CRUD Isolation", self.test_message_crud_isolation),
             ("Analytics Access Control", self.test_analytics_access_control),
             ("Background Scheduler", self.test_background_scheduler),
+            # AI Feature Tests
+            ("AI Authentication Required", self.test_ai_authentication_required),
+            ("AI Message Generation", self.test_ai_message_generation),
+            ("AI Message Enhancement", self.test_ai_message_enhancement),
+            ("AI Suggestions by Plan", self.test_ai_suggestions_by_plan),
+            ("AI Integration with Messages", self.test_ai_integration_with_messages),
+            ("AI Error Handling", self.test_ai_error_handling),
         ]
         
         passed = 0
@@ -984,11 +991,11 @@ class PremiumSubscriptionTester:
         
         # Summary
         print(f"\n{'='*70}")
-        print(f"🎯 PREMIUM SUBSCRIPTION SYSTEM TEST SUMMARY: {passed}/{total} tests passed")
+        print(f"🎯 AI-ENHANCED PREMIUM SUBSCRIPTION SYSTEM TEST SUMMARY: {passed}/{total} tests passed")
         print(f"{'='*70}")
         
         if passed == total:
-            print("🎉 All tests passed! Premium subscription system is working correctly.")
+            print("🎉 All tests passed! AI-enhanced premium subscription system is working correctly.")
         else:
             print("⚠️  Some tests failed. Check the details above.")
             
