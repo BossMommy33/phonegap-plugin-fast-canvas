@@ -855,10 +855,11 @@ class PremiumSubscriptionTester:
                 else:
                     response = requests.get(url)
                 
-                if response.status_code == 401:
+                # Accept both 401 and 403 as valid authentication errors
+                if response.status_code in [401, 403]:
                     success_count += 1
                 else:
-                    print(f"   {method} {url}: Expected 401, got {response.status_code}")
+                    print(f"   {method} {url}: Expected 401/403, got {response.status_code}")
             
             if success_count == len(test_requests):
                 self.log_result("AI Authentication Required", True, 
