@@ -413,9 +413,10 @@ const Header = ({ activeTab, setActiveTab }) => {
                       <LogOut className="w-4 h-4" />
                       <span>{t('auth.logout')}</span>
                     </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
