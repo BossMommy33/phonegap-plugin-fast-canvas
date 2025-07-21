@@ -349,9 +349,6 @@ async def enhance_message_with_ai(text: str, action: str, tone: str = "freundlic
 
 async def get_message_suggestions(user_plan: str) -> List[dict]:
     """Get AI-powered message suggestions based on user plan"""
-    if not openai_client:
-        return []
-    
     base_suggestions = [
         {"prompt": "Erstelle eine Meeting-Erinnerung für morgen 14:00", "occasion": "meeting", "tone": "professionell"},
         {"prompt": "Schreibe eine Geburtstagsnachricht für einen Freund", "occasion": "geburtstag", "tone": "freundlich"},
