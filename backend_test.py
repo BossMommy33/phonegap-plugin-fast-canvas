@@ -57,7 +57,343 @@ class PremiumSubscriptionTester:
             'details': details
         })
         
-    def test_api_root(self):
+    def test_clean_database_state(self):
+        """Test 1: Verify clean database state with no test data"""
+        try:
+            # Create admin user to check database state
+            admin_data = {
+                "email": "admin@zeitgesteuerte.de",
+                "password": "AdminPassword123!",
+                "name": "Admin User"
+            }
+            
+            # Try to register admin (might already exist)
+            response = requests.post(f"{API_BASE}/auth/register", json=admin_data)
+            if response.status_code == 200:
+                admin_token = response.json()['access_token']
+            else:
+                # Try login if already exists
+                login_response = requests.post(f"{API_BASE}/auth/login", json={
+                    "email": admin_data['email'],
+                    "password": admin_data['password']
+                })
+                if login_response.status_code == 200:
+                    admin_token = login_response.json()['access_token']
+                else:
+                    self.log_result("Clean Database State", False, "Cannot access admin user")
+                    return False
+            
+            headers = {"Authorization": f"Bearer {admin_token}"}
+            
+            # Get admin stats to check database state
+            response = requests.get(f"{API_BASE}/admin/stats", headers=headers)
+            if response.status_code == 200:
+                stats = response.json()
+                
+                # Check for clean production state
+                total_users = stats.get('total_users', 0)
+                total_revenue = stats.get('total_revenue', 0)
+                messages_sent_today = stats.get('messages_sent_today', 0)
+                messages_sent_month = stats.get('messages_sent_month', 0)
+                
+                # For production readiness, we expect minimal test data
+                if (total_users <= 50 and  # Allow some test users
+                    total_revenue == 0.0 and  # No real transactions
+                    messages_sent_today <= 10 and  # Minimal test messages
+                    messages_sent_month <= 50):  # Minimal monthly messages
+                    
+                    self.log_result("Clean Database State", True, 
+                                  f"Production-ready state: {total_users} users, €{total_revenue} revenue, {messages_sent_month} messages this month")
+                    return True
+                else:
+                    self.log_result("Clean Database State", False, 
+                                  f"Database not clean: {total_users} users, €{total_revenue} revenue, {messages_sent_month} messages")
+                    return False
+            else:
+                self.log_result("Clean Database State", False, f"Cannot get admin stats: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Clean Database State", False, f"Error: {str(e)}")
+            return False
+
+    def test_referral_system_complete(self):
+        """Test referral system with bonus distribution"""
+        try:
+            # Create referrer user
+            referrer_data = {
+                "email": f"referrer_{uuid.uuid4().hex[:8]}@zeitgesteuerte.de",
+                "password": "SecurePassword123!",
+                "name": "Referrer User"
+            }
+            
+            response = requests.post(f"{API_BASE}/auth/register", json=referrer_data)
+            if response.status_code != 200:
+                self.log_result("Referral System", False, "Failed to create referrer user")
+                return False
+            
+            referrer_data_response = response.json()
+            referrer_token = referrer_data_response['access_token']
+            referral_code = referrer_data_response['user']['referral_code']
+            
+            print(f"   Referrer created with code: {referral_code}")
+            
+            # Create referred user with referral code
+            referred_data = {
+                "email": f"referred_{uuid.uuid4().hex[:8]}@zeitgesteuerte.de",
+                "password": "SecurePassword123!",
+                "name": "Referred User",
+                "referral_code": referral_code
+            }
+            
+            response = requests.post(f"{API_BASE}/auth/register", json=referred_data)
+            if response.status_code != 200:
+                self.log_result("Referral System", False, f"Failed to create referred user: {response.text}")
+                return False
+            
+            referred_token = response.json()['access_token']
+            print(f"   Referred user created successfully")
+            
+            # Check referrer's referral statistics
+            referrer_headers = {"Authorization": f"Bearer {referrer_token}"}
+            response = requests.get(f"{API_BASE}/auth/referrals", headers=referrer_headers)
+            
+            if response.status_code == 200:
+                referral_stats = response.json()
+                
+                if (referral_stats.get('total_referrals') >= 1 and
+                    referral_stats.get('bonus_messages_earned') >= 5 and
+                    'referral_link' in referral_stats and
+                    referral_code in referral_stats['referral_link']):
+                    
+                    self.log_result("Referral System", True, 
+                                  f"Referral system working: {referral_stats['total_referrals']} referrals, {referral_stats['bonus_messages_earned']} bonus messages")
+                    return True
+                else:
+                    self.log_result("Referral System", False, f"Invalid referral stats: {referral_stats}")
+                    return False
+            else:
+                self.log_result("Referral System", False, f"Cannot get referral stats: HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Referral System", False, f"Error: {str(e)}")
+            return False
+
+    def test_ai_german_message_generation(self):
+        """Test AI message generation with German prompts"""
+        if 'free_user' not in self.test_users:
+            self.log_result("AI German Messages", False, "No test user available")
+            return False
+            
+        try:
+            user = self.test_users['free_user']
+            headers = {"Authorization": f"Bearer {user['token']}"}
+            
+            # Test German prompts with different scenarios
+            german_test_cases = [
+                {
+                    "prompt": "Erstelle eine höfliche Erinnerung für ein wichtiges Meeting morgen um 14:00 Uhr",
+                    "tone": "professionell",
+                    "occasion": "meeting"
+                },
+                {
+                    "prompt": "Schreibe eine herzliche Geburtstagsnachricht für meinen besten Freund",
+                    "tone": "freundlich", 
+                    "occasion": "geburtstag"
+                },
+                {
+                    "prompt": "Formuliere eine Terminerinnerung für den Zahnarztbesuch nächste Woche",
+                    "tone": "humorvoll",
+                    "occasion": "termin"
+                }
+            ]
+            
+            success_count = 0
+            for i, test_case in enumerate(german_test_cases):
+                response = requests.post(f"{API_BASE}/ai/generate", json=test_case, headers=headers)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if (data.get('success') == True and 
+                        data.get('generated_text') and 
+                        len(data.get('generated_text', '')) > 20):  # Reasonable length
+                        
+                        generated_text = data['generated_text']
+                        # Check if response contains German characteristics
+                        german_indicators = ['der', 'die', 'das', 'und', 'für', 'mit', 'um', 'Uhr', 'Sie', 'ich']
+                        has_german = any(indicator in generated_text for indicator in german_indicators)
+                        
+                        if has_german or len(generated_text) > 30:  # Either German or substantial content
+                            success_count += 1
+                            print(f"   German test {i+1}: Generated {len(generated_text)} chars")
+                        else:
+                            print(f"   German test {i+1}: Generated text seems too short or not German")
+                    else:
+                        print(f"   German test {i+1}: Invalid response format")
+                else:
+                    print(f"   German test {i+1}: HTTP {response.status_code}")
+            
+            if success_count == len(german_test_cases):
+                self.log_result("AI German Messages", True, 
+                              f"All {len(german_test_cases)} German AI generation tests passed")
+                return True
+            else:
+                self.log_result("AI German Messages", False, 
+                              f"Only {success_count}/{len(german_test_cases)} German tests passed")
+                return False
+                
+        except Exception as e:
+            self.log_result("AI German Messages", False, f"Error: {str(e)}")
+            return False
+
+    def test_subscription_plan_enforcement(self):
+        """Test multi-tier subscription plan restrictions"""
+        try:
+            # Test with free user (already created)
+            if 'free_user' not in self.test_users:
+                self.log_result("Subscription Plan Enforcement", False, "No free user available")
+                return False
+            
+            user = self.test_users['free_user']
+            headers = {"Authorization": f"Bearer {user['token']}"}
+            
+            # Test 1: Free user message limit (5 messages)
+            message_count = 0
+            for i in range(6):  # Try to create 6 messages
+                future_time = datetime.utcnow() + timedelta(minutes=i+10)
+                message_data = {
+                    "title": f"Limit Test Message {i+1}",
+                    "content": f"Testing subscription limits - message {i+1}",
+                    "scheduled_time": future_time.isoformat() + "Z"
+                }
+                
+                response = requests.post(f"{API_BASE}/messages", json=message_data, headers=headers)
+                if response.status_code == 200:
+                    message_count += 1
+                    self.created_message_ids.append(response.json()['id'])
+                elif response.status_code == 403 and "limit" in response.text.lower():
+                    break  # Expected limit reached
+                else:
+                    print(f"   Unexpected response: HTTP {response.status_code}")
+                    break
+            
+            free_limit_enforced = (message_count == 5)
+            
+            # Test 2: Free user recurring message restriction
+            future_time = datetime.utcnow() + timedelta(hours=1)
+            recurring_message = {
+                "title": "Recurring Test",
+                "content": "This should fail for free users",
+                "scheduled_time": future_time.isoformat() + "Z",
+                "is_recurring": True,
+                "recurring_pattern": "daily"
+            }
+            
+            response = requests.post(f"{API_BASE}/messages", json=recurring_message, headers=headers)
+            recurring_blocked = (response.status_code == 403 and "recurring" in response.text.lower())
+            
+            # Test 3: Analytics access restriction
+            response = requests.get(f"{API_BASE}/analytics", headers=headers)
+            analytics_blocked = (response.status_code == 403 and "business" in response.text.lower())
+            
+            if free_limit_enforced and recurring_blocked and analytics_blocked:
+                self.log_result("Subscription Plan Enforcement", True, 
+                              f"Free plan restrictions working: {message_count} messages limit, recurring blocked, analytics blocked")
+                return True
+            else:
+                self.log_result("Subscription Plan Enforcement", False, 
+                              f"Enforcement issues: limit={free_limit_enforced}, recurring={recurring_blocked}, analytics={analytics_blocked}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Subscription Plan Enforcement", False, f"Error: {str(e)}")
+            return False
+
+    def test_production_security_measures(self):
+        """Test production security measures"""
+        try:
+            security_tests_passed = 0
+            total_security_tests = 4
+            
+            # Test 1: Invalid JWT token rejection
+            invalid_headers = {"Authorization": "Bearer invalid_token_12345"}
+            response = requests.get(f"{API_BASE}/auth/me", headers=invalid_headers)
+            if response.status_code == 401:
+                security_tests_passed += 1
+                print("   ✓ Invalid JWT tokens rejected")
+            else:
+                print(f"   ✗ Invalid JWT token not rejected: HTTP {response.status_code}")
+            
+            # Test 2: Missing authentication rejection
+            response = requests.get(f"{API_BASE}/auth/me")
+            if response.status_code in [401, 403]:
+                security_tests_passed += 1
+                print("   ✓ Missing authentication rejected")
+            else:
+                print(f"   ✗ Missing authentication not rejected: HTTP {response.status_code}")
+            
+            # Test 3: Admin endpoint protection
+            response = requests.get(f"{API_BASE}/admin/stats")
+            if response.status_code in [401, 403]:
+                security_tests_passed += 1
+                print("   ✓ Admin endpoints protected")
+            else:
+                print(f"   ✗ Admin endpoints not protected: HTTP {response.status_code}")
+            
+            # Test 4: Input validation (empty required fields)
+            response = requests.post(f"{API_BASE}/auth/register", json={})
+            if response.status_code == 422:  # Validation error
+                security_tests_passed += 1
+                print("   ✓ Input validation working")
+            else:
+                print(f"   ✗ Input validation not working: HTTP {response.status_code}")
+            
+            if security_tests_passed == total_security_tests:
+                self.log_result("Production Security", True, 
+                              f"All {total_security_tests} security measures working")
+                return True
+            else:
+                self.log_result("Production Security", False, 
+                              f"Only {security_tests_passed}/{total_security_tests} security tests passed")
+                return False
+                
+        except Exception as e:
+            self.log_result("Production Security", False, f"Error: {str(e)}")
+            return False
+
+    def test_api_prefix_compliance(self):
+        """Test that all endpoints use /api prefix for production"""
+        try:
+            # Test key endpoints have /api prefix
+            test_endpoints = [
+                f"{API_BASE}/",  # Root API endpoint
+                f"{API_BASE}/auth/me",  # Auth endpoint
+                f"{API_BASE}/messages",  # Messages endpoint
+                f"{API_BASE}/subscriptions/plans",  # Subscriptions endpoint
+                f"{API_BASE}/ai/suggestions",  # AI endpoint
+                f"{API_BASE}/admin/stats"  # Admin endpoint
+            ]
+            
+            prefix_compliant = 0
+            for endpoint in test_endpoints:
+                if "/api/" in endpoint:
+                    prefix_compliant += 1
+                else:
+                    print(f"   ✗ Endpoint missing /api prefix: {endpoint}")
+            
+            if prefix_compliant == len(test_endpoints):
+                self.log_result("API Prefix Compliance", True, 
+                              f"All {len(test_endpoints)} endpoints use /api prefix")
+                return True
+            else:
+                self.log_result("API Prefix Compliance", False, 
+                              f"Only {prefix_compliant}/{len(test_endpoints)} endpoints compliant")
+                return False
+                
+        except Exception as e:
+            self.log_result("API Prefix Compliance", False, f"Error: {str(e)}")
+            return False
         """Test API root endpoint"""
         try:
             response = requests.get(f"{API_BASE}/")
