@@ -91,6 +91,7 @@ class User(BaseModel):
     email: str
     name: str
     hashed_password: str
+    role: str = "user"  # user, admin
     subscription_plan: str = "free"
     subscription_status: str = "active"  # active, cancelled, expired
     subscription_expires_at: Optional[datetime] = None
