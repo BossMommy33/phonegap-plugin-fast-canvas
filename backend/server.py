@@ -332,17 +332,17 @@ async def enhance_message_with_ai(text: str, action: str, tone: str = "freundlic
         
         Antworte nur mit dem bearbeiteten Text, ohne zusätzliche Erklärungen."""
         
-        response = await openai_client.chat.completions.acreate(
-            model="gpt-3.5-turbo",
+        response = await openai_client.chat(
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": text}
+                ChatMessage(role="system", content=system_prompt),
+                ChatMessage(role="user", content=text)
             ],
+            model="gpt-3.5-turbo",
             max_tokens=400,
             temperature=0.5
         )
         
-        return response.choices[0].message.content.strip()
+        return response.content.strip()
         
     except Exception as e:
         logger.error(f"AI enhancement error: {e}")
