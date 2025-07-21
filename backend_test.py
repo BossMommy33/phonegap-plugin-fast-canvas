@@ -305,13 +305,21 @@ class PremiumSubscriptionTester:
     
     def test_recurring_message_restriction(self):
         """Test recurring message restriction for free users"""
-        if 'free_user' not in self.test_users:
-            self.log_result("Recurring Restriction", False, "No test user available")
-            return False
-            
         try:
-            user = self.test_users['free_user']
-            headers = {"Authorization": f"Bearer {user['token']}"}
+            # Create a new user for recurring test to avoid message limit issues
+            user_data = {
+                "email": f"recurring_test_{uuid.uuid4().hex[:8]}@example.com",
+                "password": "SecurePassword123!",
+                "name": "Recurring Test User"
+            }
+            
+            response = requests.post(f"{API_BASE}/auth/register", json=user_data)
+            if response.status_code != 200:
+                self.log_result("Recurring Restriction", False, "Failed to create recurring test user")
+                return False
+            
+            token = response.json()['access_token']
+            headers = {"Authorization": f"Bearer {token}"}
             
             future_time = datetime.utcnow() + timedelta(hours=1)
             message_data = {
@@ -330,7 +338,7 @@ class PremiumSubscriptionTester:
                                   "Recurring messages blocked for free users")
                     return True
                 else:
-                    self.log_result("Recurring Restriction", False, "Wrong error message")
+                    self.log_result("Recurring Restriction", False, f"Wrong error message: {response.text}")
                     return False
             else:
                 self.log_result("Recurring Restriction", False, 
