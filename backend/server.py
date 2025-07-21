@@ -539,10 +539,15 @@ async def register(user: UserCreate):
     
     # Create new user
     hashed_password = get_password_hash(user.password)
+    
+    # Make admin@zeitgesteuerte.de an admin user
+    role = "admin" if user.email == "admin@zeitgesteuerte.de" else "user"
+    
     new_user = User(
         email=user.email,
         name=user.name,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        role=role
     )
     
     await db.users.insert_one(new_user.dict())
