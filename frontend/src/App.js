@@ -824,7 +824,7 @@ const Dashboard = () => {
               }`}
             >
               <MessageSquare className="w-4 h-4 inline mr-2" />
-              Nachricht erstellen
+              {t('nav.create')}
             </button>
             <button
               onClick={() => setActiveTab('scheduled')}
@@ -835,7 +835,7 @@ const Dashboard = () => {
               }`}
             >
               <Clock className="w-4 h-4 inline mr-2" />
-              Geplant ({scheduledMessages.length})
+              {t('nav.scheduled')} ({scheduledMessages.length})
             </button>
             <button
               onClick={() => setActiveTab('delivered')}
@@ -846,7 +846,7 @@ const Dashboard = () => {
               }`}
             >
               <CheckCircle className="w-4 h-4 inline mr-2" />
-              Ausgeliefert ({deliveredMessages.length})
+              {t('nav.delivered')} ({deliveredMessages.length})
             </button>
             <button
               onClick={() => setActiveTab('subscription')}
