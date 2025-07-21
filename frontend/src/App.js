@@ -668,6 +668,7 @@ const Dashboard = () => {
     fetchMessages();
     fetchSubscriptionPlans();
     fetchAiSuggestions();
+    fetchReferralData();
     
     if (user?.role === 'admin') {
       fetchAdminStats();
