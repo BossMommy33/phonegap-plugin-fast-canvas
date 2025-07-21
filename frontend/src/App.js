@@ -596,10 +596,21 @@ const Dashboard = () => {
     fetchMessages();
     fetchSubscriptionPlans();
     fetchAiSuggestions();
+    
+    if (user?.role === 'admin') {
+      fetchAdminStats();
+      fetchAdminData();
+    }
+    
     // Refresh messages every 10 seconds to show delivered messages
-    const interval = setInterval(fetchMessages, 10000);
+    const interval = setInterval(() => {
+      fetchMessages();
+      if (user?.role === 'admin') {
+        fetchAdminStats();
+      }
+    }, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const scheduledMessages = getMessagesByStatus('scheduled');
   const deliveredMessages = getMessagesByStatus('delivered');
