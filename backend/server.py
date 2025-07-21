@@ -113,6 +113,8 @@ class UserResponse(BaseModel):
     monthly_messages_used: int
     monthly_messages_limit: int
     features: List[str]
+    referral_code: str
+    referred_count: int = 0
 
 class Token(BaseModel):
     access_token: str
