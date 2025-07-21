@@ -1489,6 +1489,175 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Referral Tab */}
+        {activeTab === 'referral' && (
+          <div className="space-y-6">
+            {/* Referral Overview */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                <Share className="w-6 h-6 mr-2 text-green-600" />
+                Freunde einladen & Belohnungen erhalten
+              </h2>
+
+              {referralData ? (
+                <>
+                  {/* Stats Cards */}
+                  <div className="grid md:grid-cols-3 gap-4 mb-8">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-green-600 font-medium">Eingeladene Freunde</p>
+                          <p className="text-2xl font-bold text-green-800">{referralData.total_referrals}</p>
+                        </div>
+                        <Users className="w-8 h-8 text-green-500" />
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-blue-600 font-medium">Bonus-Nachrichten</p>
+                          <p className="text-2xl font-bold text-blue-800">{referralData.bonus_messages_earned}</p>
+                        </div>
+                        <Gift className="w-8 h-8 text-blue-500" />
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-purple-600 font-medium">Ihr Referral-Code</p>
+                          <p className="text-2xl font-bold text-purple-800">{referralData.referral_code}</p>
+                        </div>
+                        <Crown className="w-8 h-8 text-purple-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Referral Link Section */}
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-8">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                      <Share className="w-5 h-5 mr-2 text-green-600" />
+                      Ihr persönlicher Einladungslink
+                    </h3>
+                    
+                    <div className="bg-white border border-gray-300 rounded-lg p-3 mb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 mr-4">
+                          <p className="text-sm font-medium text-gray-800 truncate">
+                            {referralData.referral_link}
+                          </p>
+                        </div>
+                        <button
+                          onClick={copyReferralLink}
+                          className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                            copySuccess 
+                              ? 'bg-green-500 text-white' 
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                          }`}
+                        >
+                          {copySuccess ? (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              <span>Kopiert!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4" />
+                              <span>Kopieren</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
+                      <div className="flex items-center space-x-2">
+                        <Gift className="w-4 h-4 text-green-600" />
+                        <span>Sie erhalten 5 Bonus-Nachrichten pro Freund</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-blue-600" />
+                        <span>Ihre Freunde erhalten ebenfalls 5 Bonus-Nachrichten</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* How it works */}
+                  <div className="bg-gray-50 rounded-lg p-6 mb-8">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      🎉 So funktioniert's:
+                    </h3>
+                    <div className="space-y-3 text-gray-700">
+                      <div className="flex items-start space-x-3">
+                        <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</span>
+                        <div>
+                          <p className="font-medium">Link teilen</p>
+                          <p className="text-sm text-gray-600">Teilen Sie Ihren persönlichen Einladungslink mit Freunden und Familie</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</span>
+                        <div>
+                          <p className="font-medium">Freund registriert sich</p>
+                          <p className="text-sm text-gray-600">Ihr Freund registriert sich über Ihren Link und erhält sofort 5 Bonus-Nachrichten</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <span className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</span>
+                        <div>
+                          <p className="font-medium">Belohnung erhalten</p>
+                          <p className="text-sm text-gray-600">Sie erhalten ebenfalls 5 Bonus-Nachrichten - eine Win-Win-Situation!</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Referred Users List */}
+                  {referralData.referred_users && referralData.referred_users.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <Users className="w-5 h-5 mr-2 text-blue-600" />
+                        Ihre eingeladenen Freunde ({referralData.referred_users.length})
+                      </h3>
+                      
+                      <div className="space-y-3">
+                        {referralData.referred_users.map((referredUser, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="font-medium text-gray-800">{referredUser.name}</p>
+                              <p className="text-sm text-gray-600">{referredUser.email}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                referredUser.subscription_plan === 'premium' 
+                                  ? 'bg-yellow-100 text-yellow-800' 
+                                  : referredUser.subscription_plan === 'business'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {referredUser.subscription_plan}
+                              </span>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(referredUser.created_at).toLocaleDateString('de-DE')}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-6 h-6 text-gray-400 animate-spin mr-2" />
+                  <span className="text-gray-500">Lade Referral-Daten...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
