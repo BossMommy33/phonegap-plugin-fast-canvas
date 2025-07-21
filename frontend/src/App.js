@@ -380,6 +380,11 @@ const Dashboard = () => {
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [referralData, setReferralData] = useState(null);
+  
+  // Advanced Analytics State
+  const [advancedAnalytics, setAdvancedAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [selectedAnalyticsTab, setSelectedAnalyticsTab] = useState('overview');
   const [copySuccess, setCopySuccess] = useState(false);
   const { user, refreshUser } = useAuth();
 
