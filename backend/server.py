@@ -898,7 +898,7 @@ async def get_admin_stats(current_admin: User = Depends(get_current_admin)):
 async def get_all_users(current_admin: User = Depends(get_current_admin)):
     """Get all users (admin only)"""
     try:
-        users = await db.users.find({}, {"hashed_password": 0}).sort("created_at", -1).to_list(1000)
+        users = await db.users.find({}, {"hashed_password": 0, "_id": 0}).sort("created_at", -1).to_list(1000)
         return {"users": users}
     except Exception as e:
         logger.error(f"Error getting users: {e}")
@@ -908,11 +908,11 @@ async def get_all_users(current_admin: User = Depends(get_current_admin)):
 async def get_all_transactions(current_admin: User = Depends(get_current_admin)):
     """Get all payment transactions (admin only)"""
     try:
-        transactions = await db.payment_transactions.find({}).sort("created_at", -1).to_list(1000)
+        transactions = await db.payment_transactions.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
         
         # Add user information to transactions
         for transaction in transactions:
-            user = await db.users.find_one({"id": transaction["user_id"]}, {"email": 1, "name": 1})
+            user = await db.users.find_one({"id": transaction["user_id"]}, {"email": 1, "name": 1, "_id": 0})
             if user:
                 transaction["user_email"] = user["email"]
                 transaction["user_name"] = user["name"]
