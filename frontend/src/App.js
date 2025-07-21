@@ -425,6 +425,8 @@ const Header = ({ activeTab, setActiveTab }) => {
 
 // Main Dashboard Component
 const Dashboard = () => {
+  const { user } = useAuth();
+  const { t } = useContext(LanguageContext);
   const [messages, setMessages] = useState([]);
   const [activeTab, setActiveTab] = useState('create');
   const [formData, setFormData] = useState({
