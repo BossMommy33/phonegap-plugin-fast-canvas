@@ -948,6 +948,239 @@ async def delete_message(message_id: str, current_user: User = Depends(get_curre
         raise HTTPException(status_code=404, detail="Message not found")
     return {"message": "Message deleted successfully"}
 
+# Enhanced Messaging Features
+@api_router.post("/messages/bulk", response_model=BulkMessageResponse)
+async def create_bulk_messages(bulk_request: BulkMessageCreate, current_user: User = Depends(get_current_user)):
+    """Create multiple messages at once with time intervals"""
+    if current_user.subscription_plan == "free":
+        raise HTTPException(status_code=403, detail="Bulk messages are only available for Premium and Business subscribers")
+    
+    created_messages = []
+    errors = []
+    success_count = 0
+    failed_count = 0
+    
+    try:
+        # Check if user has enough message quota
+        if not await check_message_limit(current_user):
+            remaining_messages = SUBSCRIPTION_PLANS[current_user.subscription_plan]["monthly_messages"] - current_user.monthly_message_count
+            if remaining_messages < len(bulk_request.messages):
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Not enough messages remaining. You can create {remaining_messages} more messages this month."
+                )
+        
+        base_time = datetime.utcnow()
+        
+        for i, message_data in enumerate(bulk_request.messages):
+            try:
+                # Calculate scheduled time with interval
+                scheduled_time = message_data.scheduled_time + timedelta(minutes=i * bulk_request.time_interval)
+                
+                # Create message
+                message_obj = ScheduledMessage(
+                    user_id=current_user.id,
+                    title=message_data.title,
+                    content=message_data.content,
+                    scheduled_time=scheduled_time,
+                    is_recurring=message_data.is_recurring,
+                    recurring_pattern=message_data.recurring_pattern
+                )
+                
+                await db.scheduled_messages.insert_one(message_obj.dict())
+                await increment_message_count(current_user.id)
+                
+                created_messages.append(message_obj.id)
+                success_count += 1
+                
+            except Exception as e:
+                errors.append(f"Message {i+1}: {str(e)}")
+                failed_count += 1
+        
+        return BulkMessageResponse(
+            success_count=success_count,
+            failed_count=failed_count,
+            created_messages=created_messages,
+            errors=errors
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating bulk messages: {e}")
+        raise HTTPException(status_code=500, detail="Error creating bulk messages")
+
+@api_router.get("/templates")
+async def get_message_templates(current_user: User = Depends(get_current_user)):
+    """Get user's message templates and public templates"""
+    try:
+        # Get user's private templates
+        user_templates = await db.message_templates.find({"user_id": current_user.id}).sort("created_at", -1).to_list(1000)
+        
+        # Get public templates (created by other users and marked as public)
+        public_templates = await db.message_templates.find({
+            "is_public": True,
+            "user_id": {"$ne": current_user.id}
+        }).sort("usage_count", -1).to_list(50)
+        
+        return {
+            "user_templates": user_templates,
+            "public_templates": public_templates
+        }
+    except Exception as e:
+        logger.error(f"Error getting templates: {e}")
+        raise HTTPException(status_code=500, detail="Error loading message templates")
+
+@api_router.post("/templates", response_model=MessageTemplate)
+async def create_message_template(template: MessageTemplateCreate, current_user: User = Depends(get_current_user)):
+    """Create a new message template"""
+    try:
+        template_obj = MessageTemplate(
+            user_id=current_user.id,
+            name=template.name,
+            title=template.title,
+            content=template.content,
+            category=template.category,
+            is_public=template.is_public
+        )
+        
+        await db.message_templates.insert_one(template_obj.dict())
+        return template_obj
+        
+    except Exception as e:
+        logger.error(f"Error creating template: {e}")
+        raise HTTPException(status_code=500, detail="Error creating message template")
+
+@api_router.put("/templates/{template_id}")
+async def update_message_template(
+    template_id: str, 
+    template_update: MessageTemplateCreate, 
+    current_user: User = Depends(get_current_user)
+):
+    """Update a message template (only template owner can update)"""
+    try:
+        # Check if template exists and belongs to user
+        existing_template = await db.message_templates.find_one({"id": template_id, "user_id": current_user.id})
+        if not existing_template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Update template
+        await db.message_templates.update_one(
+            {"id": template_id, "user_id": current_user.id},
+            {"$set": {
+                "name": template_update.name,
+                "title": template_update.title,
+                "content": template_update.content,
+                "category": template_update.category,
+                "is_public": template_update.is_public
+            }}
+        )
+        
+        return {"message": "Template updated successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating template: {e}")
+        raise HTTPException(status_code=500, detail="Error updating template")
+
+@api_router.delete("/templates/{template_id}")
+async def delete_message_template(template_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a message template"""
+    try:
+        result = await db.message_templates.delete_one({"id": template_id, "user_id": current_user.id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        return {"message": "Template deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting template: {e}")
+        raise HTTPException(status_code=500, detail="Error deleting template")
+
+@api_router.post("/templates/{template_id}/use")
+async def use_message_template(template_id: str, current_user: User = Depends(get_current_user)):
+    """Use a template (increment usage count and return template data)"""
+    try:
+        # Check if template exists (either user's own or public)
+        template = await db.message_templates.find_one({
+            "$or": [
+                {"id": template_id, "user_id": current_user.id},
+                {"id": template_id, "is_public": True}
+            ]
+        })
+        
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        # Increment usage count
+        await db.message_templates.update_one(
+            {"id": template_id},
+            {"$inc": {"usage_count": 1}}
+        )
+        
+        return {
+            "id": template["id"],
+            "name": template["name"],
+            "title": template["title"],
+            "content": template["content"],
+            "category": template["category"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error using template: {e}")
+        raise HTTPException(status_code=500, detail="Error using template")
+
+# Calendar Integration
+@api_router.get("/messages/calendar/{year}/{month}")
+async def get_calendar_messages(year: int, month: int, current_user: User = Depends(get_current_user)):
+    """Get messages for a specific month for calendar view"""
+    try:
+        # Create date range for the month
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        
+        # Get messages in date range
+        messages = await db.scheduled_messages.find({
+            "user_id": current_user.id,
+            "scheduled_time": {
+                "$gte": start_date,
+                "$lt": end_date
+            }
+        }).sort("scheduled_time", 1).to_list(1000)
+        
+        # Group messages by day
+        calendar_data = {}
+        for message in messages:
+            day = message["scheduled_time"].day
+            if day not in calendar_data:
+                calendar_data[day] = []
+            
+            calendar_data[day].append({
+                "id": message["id"],
+                "title": message["title"],
+                "scheduled_time": message["scheduled_time"],
+                "status": message["status"],
+                "is_recurring": message.get("is_recurring", False)
+            })
+        
+        return {
+            "year": year,
+            "month": month,
+            "calendar_data": calendar_data
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting calendar data: {e}")
+        raise HTTPException(status_code=500, detail="Error loading calendar data")
+
 # Admin endpoints
 @api_router.get("/admin/stats", response_model=AdminStats)
 async def get_admin_stats(current_admin: User = Depends(get_current_admin)):
