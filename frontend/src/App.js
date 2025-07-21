@@ -12,7 +12,12 @@ import {
   Calendar,
   Repeat,
   Trash2,
-  Bell
+  Bell,
+  Wand2,
+  Sparkles,
+  RefreshCw,
+  Send,
+  Lightbulb
 } from "lucide-react";
 import "./App.css";
 import axios from "axios";
