@@ -423,15 +423,23 @@ class PremiumSubscriptionTester:
     
     def test_background_scheduler(self):
         """Test background scheduler functionality"""
-        if 'free_user' not in self.test_users:
-            self.log_result("Background Scheduler", False, "No test user available")
-            return False
-            
         try:
             print("\n🕐 Testing background scheduler (this will take ~60 seconds)...")
             
-            user = self.test_users['free_user']
-            headers = {"Authorization": f"Bearer {user['token']}"}
+            # Create a new user for scheduler test to avoid message limit issues
+            user_data = {
+                "email": f"scheduler_test_{uuid.uuid4().hex[:8]}@example.com",
+                "password": "SecurePassword123!",
+                "name": "Scheduler Test User"
+            }
+            
+            response = requests.post(f"{API_BASE}/auth/register", json=user_data)
+            if response.status_code != 200:
+                self.log_result("Background Scheduler", False, "Failed to create scheduler test user")
+                return False
+            
+            token = response.json()['access_token']
+            headers = {"Authorization": f"Bearer {token}"}
             
             # Create message scheduled for 20 seconds from now
             future_time = datetime.utcnow() + timedelta(seconds=20)
@@ -445,12 +453,11 @@ class PremiumSubscriptionTester:
             # Create the message
             response = requests.post(f"{API_BASE}/messages", json=message_data, headers=headers)
             if response.status_code != 200:
-                self.log_result("Background Scheduler", False, "Failed to create test message")
+                self.log_result("Background Scheduler", False, f"Failed to create test message: {response.text}")
                 return False
             
             message_data = response.json()
             message_id = message_data['id']
-            self.created_message_ids.append(message_id)
             
             print(f"   Created message {message_id}, waiting for delivery...")
             
@@ -474,6 +481,8 @@ class PremiumSubscriptionTester:
                             if test_message.get('delivered_at'):
                                 self.log_result("Background Scheduler", True, 
                                               f"Message delivered after {waited}s")
+                                # Clean up the test message
+                                requests.delete(f"{API_BASE}/messages/{message_id}", headers=headers)
                                 return True
                             else:
                                 self.log_result("Background Scheduler", False, 
