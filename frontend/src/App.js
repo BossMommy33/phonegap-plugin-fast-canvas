@@ -332,6 +332,14 @@ const Dashboard = () => {
   const [aiSuggestions, setSuggestions] = useState([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
+  const [adminStats, setAdminStats] = useState(null);
+  const [adminData, setAdminData] = useState({
+    users: [],
+    transactions: [],
+    payouts: []
+  });
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutLoading, setPayoutLoading] = useState(false);
   const { user, refreshUser } = useAuth();
 
   // Fetch messages
