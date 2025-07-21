@@ -17,7 +17,14 @@ import {
   Sparkles,
   RefreshCw,
   Send,
-  Lightbulb
+  Lightbulb,
+  Shield,
+  DollarSign,
+  TrendingUp,
+  Users,
+  FileText,
+  Download,
+  Settings
 } from "lucide-react";
 import "./App.css";
 import axios from "axios";
