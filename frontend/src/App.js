@@ -310,6 +310,9 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(false);
   const [subscriptionPlans, setSubscriptionPlans] = useState({});
+  const [aiSuggestions, setSuggestions] = useState([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
   const { user, refreshUser } = useAuth();
 
   // Fetch messages
