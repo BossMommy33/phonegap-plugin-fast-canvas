@@ -323,6 +323,7 @@ const AuthPage = () => {
 // Header Component
 const Header = ({ activeTab, setActiveTab }) => {
   const { user, logout } = useAuth();
+  const { t } = useContext(LanguageContext);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const getPlanIcon = (plan) => {
