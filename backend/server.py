@@ -249,8 +249,12 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise credentials_exception
     return User(**user)
 
-def get_user_response(user: User) -> UserResponse:
+async def get_user_response(user: User) -> UserResponse:
     plan = SUBSCRIPTION_PLANS.get(user.subscription_plan, SUBSCRIPTION_PLANS["free"])
+    
+    # Count referrals
+    referred_count = await db.users.count_documents({"referred_by": user.referral_code})
+    
     return UserResponse(
         id=user.id,
         email=user.email,
@@ -260,7 +264,9 @@ def get_user_response(user: User) -> UserResponse:
         subscription_status=user.subscription_status,
         monthly_messages_used=user.monthly_message_count,
         monthly_messages_limit=plan["monthly_messages"],
-        features=plan["features"]
+        features=plan["features"],
+        referral_code=user.referral_code,
+        referred_count=referred_count
     )
 
 async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
