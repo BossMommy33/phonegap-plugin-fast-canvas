@@ -740,6 +740,22 @@ const Dashboard = () => {
               <CreditCard className="w-4 h-4 inline mr-2" />
               Premium
             </button>
+            <button
+              onClick={() => setActiveTab('referral')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'referral'
+                  ? 'bg-green-500 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Share className="w-4 h-4 inline mr-2" />
+              Freunde einladen
+              {user?.referred_count > 0 && (
+                <span className="ml-1 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
+                  {user.referred_count}
+                </span>
+              )}
+            </button>
             {user?.role === 'admin' && (
               <button
                 onClick={() => setActiveTab('admin')}
