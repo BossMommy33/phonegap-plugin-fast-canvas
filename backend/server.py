@@ -635,7 +635,67 @@ async def stripe_webhook(request: Request):
         logger.error(f"Webhook error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-# Enhanced Message endpoints
+# AI endpoints
+@api_router.post("/ai/generate", response_model=AIResponse)
+async def generate_message(request: AIGenerateRequest, current_user: User = Depends(get_current_user)):
+    """Generate message content using AI"""
+    try:
+        generated_text = await generate_message_with_ai(
+            request.prompt, 
+            request.tone, 
+            request.occasion
+        )
+        
+        return AIResponse(
+            generated_text=generated_text,
+            success=True
+        )
+    except HTTPException as e:
+        return AIResponse(
+            generated_text="",
+            success=False,
+            error=e.detail
+        )
+    except Exception as e:
+        return AIResponse(
+            generated_text="",
+            success=False,
+            error="AI-Generierung fehlgeschlagen"
+        )
+
+@api_router.post("/ai/enhance", response_model=AIResponse)
+async def enhance_message(request: AIEnhanceRequest, current_user: User = Depends(get_current_user)):
+    """Enhance existing message content using AI"""
+    try:
+        enhanced_text = await enhance_message_with_ai(
+            request.text,
+            request.action,
+            request.tone,
+            request.target_language
+        )
+        
+        return AIResponse(
+            generated_text=enhanced_text,
+            success=True
+        )
+    except HTTPException as e:
+        return AIResponse(
+            generated_text="",
+            success=False,
+            error=e.detail
+        )
+    except Exception as e:
+        return AIResponse(
+            generated_text="",
+            success=False,
+            error="AI-Verbesserung fehlgeschlagen"
+        )
+
+@api_router.get("/ai/suggestions")
+async def get_ai_suggestions(current_user: User = Depends(get_current_user)):
+    """Get AI-powered message suggestions based on user plan"""
+    suggestions = await get_message_suggestions(current_user.subscription_plan)
+    return {"suggestions": suggestions, "ai_available": openai_client is not None}
 @api_router.post("/messages", response_model=ScheduledMessageResponse)
 async def create_scheduled_message(message: ScheduledMessageCreate, current_user: User = Depends(get_current_user)):
     # Check message limit
