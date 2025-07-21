@@ -74,8 +74,13 @@ const AuthProvider = ({ children }) => {
     return userData;
   };
 
-  const register = async (email, password, name) => {
-    const response = await axios.post(`${API}/auth/register`, { email, password, name });
+  const register = async (email, password, name, referralCode = '') => {
+    const response = await axios.post(`${API}/auth/register`, { 
+      email, 
+      password, 
+      name, 
+      referral_code: referralCode 
+    });
     const { access_token, user: userData } = response.data;
     localStorage.setItem('token', access_token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
