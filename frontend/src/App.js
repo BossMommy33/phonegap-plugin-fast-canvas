@@ -24,7 +24,10 @@ import {
   Users,
   FileText,
   Download,
-  Settings
+  Settings,
+  Share,
+  Gift,
+  Copy
 } from "lucide-react";
 import "./App.css";
 import axios from "axios";
