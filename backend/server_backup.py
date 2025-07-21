@@ -16,7 +16,7 @@ import bcrypt
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from emergentintegrations.ai.openai.chat import OpenAIChat, ChatMessage, ChatResponse
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -38,18 +38,7 @@ security = HTTPBearer()
 stripe_api_key = os.environ.get('STRIPE_API_KEY')
 
 # OpenAI
-openai_api_key = os.environ.get('OPENAI_API_KEY')
-openai_client = None
-if openai_api_key:
-    try:
-        openai_client = LlmChat(
-            api_key=openai_api_key,
-            session_id="default",
-            system_message="You are a helpful assistant that generates German messages."
-        )
-    except Exception as e:
-        print(f"Warning: Could not initialize OpenAI client: {e}")
-        openai_client = None
+openai_client = OpenAIChat() # Uses system OpenAI key
 
 # Background task flag
 scheduler_running = False
@@ -305,18 +294,17 @@ async def generate_message_with_ai(prompt: str, tone: str = "freundlich", occasi
         Halte die Nachricht präzise aber herzlich. Verwende angemessene Emojis wenn passend.
         Antworte nur mit der Nachricht selbst, ohne zusätzliche Erklärungen."""
         
-        # Create a new client instance with the system prompt
-        ai_client = LlmChat(
-            api_key=openai_api_key,
-            session_id=f"generate_{uuid.uuid4().hex[:8]}",
-            system_message=system_prompt
+        response = await openai_client.chat(
+            messages=[
+                ChatMessage(role="system", content=system_prompt),
+                ChatMessage(role="user", content=prompt)
+            ],
+            model="gpt-3.5-turbo",
+            max_tokens=300,
+            temperature=0.7
         )
         
-        # Send the user message
-        user_message = UserMessage(text=prompt)
-        response = await ai_client.send_message(user_message)
-        
-        return response.strip()
+        return response.content.strip()
         
     except Exception as e:
         logger.error(f"AI generation error: {e}")
@@ -343,18 +331,17 @@ async def enhance_message_with_ai(text: str, action: str, tone: str = "freundlic
         
         Antworte nur mit dem bearbeiteten Text, ohne zusätzliche Erklärungen."""
         
-        # Create a new client instance with the system prompt
-        ai_client = LlmChat(
-            api_key=openai_api_key,
-            session_id=f"enhance_{uuid.uuid4().hex[:8]}",
-            system_message=system_prompt
+        response = await openai_client.chat(
+            messages=[
+                ChatMessage(role="system", content=system_prompt),
+                ChatMessage(role="user", content=text)
+            ],
+            model="gpt-3.5-turbo",
+            max_tokens=400,
+            temperature=0.5
         )
         
-        # Send the user message
-        user_message = UserMessage(text=text)
-        response = await ai_client.send_message(user_message)
-        
-        return response.strip()
+        return response.content.strip()
         
     except Exception as e:
         logger.error(f"AI enhancement error: {e}")
@@ -705,9 +692,7 @@ async def get_ai_suggestions(current_user: User = Depends(get_current_user)):
     """Get AI-powered message suggestions based on user plan"""
     suggestions = await get_message_suggestions(current_user.subscription_plan)
     return {"suggestions": suggestions, "ai_available": openai_client is not None}
-
 # Enhanced Message endpoints
-@api_router.post("/messages", response_model=ScheduledMessageResponse)
 async def create_scheduled_message(message: ScheduledMessageCreate, current_user: User = Depends(get_current_user)):
     # Check message limit
     if not await check_message_limit(current_user):
