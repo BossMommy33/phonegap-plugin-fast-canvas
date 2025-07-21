@@ -335,6 +335,89 @@ const Dashboard = () => {
     }
   };
 
+  // Fetch AI suggestions
+  const fetchAiSuggestions = async () => {
+    try {
+      const response = await axios.get(`${API}/ai/suggestions`);
+      setSuggestions(response.data.suggestions || []);
+    } catch (error) {
+      console.error('Error fetching AI suggestions:', error);
+    }
+  };
+
+  // Generate message with AI
+  const generateMessageWithAI = async (prompt, tone = "freundlich", occasion = null) => {
+    setAiLoading(true);
+    try {
+      const response = await axios.post(`${API}/ai/generate`, {
+        prompt,
+        tone,
+        occasion
+      });
+      
+      if (response.data.success) {
+        return response.data.generated_text;
+      } else {
+        throw new Error(response.data.error || 'AI-Generierung fehlgeschlagen');
+      }
+    } catch (error) {
+      console.error('Error generating AI message:', error);
+      alert(error.response?.data?.detail || 'AI-Generierung fehlgeschlagen');
+      return null;
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Enhance message with AI
+  const enhanceMessageWithAI = async (text, action, tone = "freundlich") => {
+    setAiLoading(true);
+    try {
+      const response = await axios.post(`${API}/ai/enhance`, {
+        text,
+        action,
+        tone
+      });
+      
+      if (response.data.success) {
+        return response.data.generated_text;
+      } else {
+        throw new Error(response.data.error || 'AI-Verbesserung fehlgeschlagen');
+      }
+    } catch (error) {
+      console.error('Error enhancing message:', error);
+      alert(error.response?.data?.detail || 'AI-Verbesserung fehlgeschlagen');
+      return null;
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Use AI suggestion
+  const useAiSuggestion = async (suggestion) => {
+    const generatedContent = await generateMessageWithAI(
+      suggestion.prompt, 
+      suggestion.tone, 
+      suggestion.occasion
+    );
+    
+    if (generatedContent) {
+      // Extract title from first line or create one
+      const lines = generatedContent.split('\n').filter(line => line.trim());
+      const title = lines[0].length > 50 ? 
+        lines[0].substring(0, 47) + '...' : 
+        lines[0];
+      const content = lines.length > 1 ? lines.slice(1).join('\n').trim() : generatedContent;
+      
+      setFormData({
+        ...formData,
+        title: title.replace(/['"]/g, ''),
+        content: content || generatedContent
+      });
+      setShowAiPanel(false);
+    }
+  };
+
   // Create new message
   const createMessage = async (e) => {
     e.preventDefault();
