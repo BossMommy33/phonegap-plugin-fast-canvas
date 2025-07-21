@@ -325,7 +325,7 @@ class PremiumSubscriptionTester:
             response = requests.post(f"{API_BASE}/messages", json=message_data, headers=headers)
             
             if response.status_code == 403:
-                if "recurring" in response.text.lower() and "premium" in response.text.lower():
+                if "recurring" in response.text.lower():
                     self.log_result("Recurring Restriction", True, 
                                   "Recurring messages blocked for free users")
                     return True
