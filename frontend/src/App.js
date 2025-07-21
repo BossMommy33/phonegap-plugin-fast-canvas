@@ -379,6 +379,8 @@ const Dashboard = () => {
   });
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutLoading, setPayoutLoading] = useState(false);
+  const [referralData, setReferralData] = useState(null);
+  const [copySuccess, setCopySuccess] = useState(false);
   const { user, refreshUser } = useAuth();
 
   // Fetch messages
