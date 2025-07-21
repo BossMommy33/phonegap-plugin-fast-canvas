@@ -372,6 +372,65 @@ const Dashboard = () => {
     }
   };
 
+  // Fetch admin statistics
+  const fetchAdminStats = async () => {
+    if (user?.role !== 'admin') return;
+    
+    try {
+      const response = await axios.get(`${API}/admin/stats`);
+      setAdminStats(response.data);
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+    }
+  };
+
+  // Fetch admin data
+  const fetchAdminData = async () => {
+    if (user?.role !== 'admin') return;
+    
+    try {
+      const [usersRes, transactionsRes, payoutsRes] = await Promise.all([
+        axios.get(`${API}/admin/users`),
+        axios.get(`${API}/admin/transactions`),
+        axios.get(`${API}/admin/payouts`)
+      ]);
+
+      setAdminData({
+        users: usersRes.data.users || [],
+        transactions: transactionsRes.data.transactions || [],
+        payouts: payoutsRes.data.payouts || []
+      });
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    }
+  };
+
+  // Request payout
+  const requestPayout = async () => {
+    const amount = parseFloat(payoutAmount);
+    if (!amount || amount <= 0) {
+      alert('Bitte geben Sie einen gültigen Betrag ein');
+      return;
+    }
+
+    setPayoutLoading(true);
+    try {
+      await axios.post(`${API}/admin/payout`, {
+        amount,
+        description: `Admin payout request - €${amount}`
+      });
+      
+      setPayoutAmount('');
+      fetchAdminStats();
+      fetchAdminData();
+      alert(`Auszahlung von €${amount} wurde erfolgreich angefordert!`);
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Fehler bei der Auszahlungsanforderung');
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
+
   // Generate message with AI
   const generateMessageWithAI = async (prompt, tone = "freundlich", occasion = null) => {
     setAiLoading(true);
