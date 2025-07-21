@@ -1578,15 +1578,15 @@ class PremiumSubscriptionTester:
         return passed == total
 
 def main():
-    """Main test execution for AI-enhanced premium subscription system"""
+    """Main test execution for AI-enhanced premium subscription system + Admin Finance Dashboard"""
     tester = PremiumSubscriptionTester()
     success = tester.run_all_tests()
     
     if success:
-        print("\n✅ AI-enhanced premium subscription system testing completed successfully!")
+        print("\n✅ Complete system testing (including Admin Finance Dashboard) completed successfully!")
         sys.exit(0)
     else:
-        print("\n❌ AI-enhanced premium subscription system testing completed with failures!")
+        print("\n❌ Complete system testing completed with failures!")
         sys.exit(1)
 
 if __name__ == "__main__":
