@@ -97,6 +97,9 @@ class User(BaseModel):
     subscription_expires_at: Optional[datetime] = None
     monthly_message_count: int = 0
     monthly_message_reset: datetime = Field(default_factory=lambda: datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0))
+    referral_code: str = Field(default_factory=lambda: str(uuid.uuid4())[:8].upper())
+    referred_by: Optional[str] = None  # referral code of referrer
+    referral_bonus_used: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class UserResponse(BaseModel):
