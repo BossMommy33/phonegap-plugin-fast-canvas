@@ -857,7 +857,7 @@ const Dashboard = () => {
               }`}
             >
               <CreditCard className="w-4 h-4 inline mr-2" />
-              Premium
+              {t('nav.subscription')}
             </button>
             <button
               onClick={() => setActiveTab('referral')}
@@ -868,7 +868,7 @@ const Dashboard = () => {
               }`}
             >
               <Share className="w-4 h-4 inline mr-2" />
-              Freunde einladen
+              {t('nav.referral')}
               {user?.referred_count > 0 && (
                 <span className="ml-1 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
                   {user.referred_count}
@@ -885,7 +885,7 @@ const Dashboard = () => {
                 }`}
               >
                 <Shield className="w-4 h-4 inline mr-2" />
-                Admin
+                {t('nav.admin')}
               </button>
             )}
           </div>
