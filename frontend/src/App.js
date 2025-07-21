@@ -1383,6 +1383,418 @@ const Dashboard = () => {
                 </div>
               )}
 
+              {/* Advanced Analytics Dashboard */}
+              <div className="border-t pt-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+                    <BarChart3 className="w-6 h-6 mr-2 text-blue-600" />
+                    Erweiterte Analytik
+                  </h3>
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => exportAnalytics('json')}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors flex items-center"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      JSON Export
+                    </button>
+                    <button
+                      onClick={() => fetchAdvancedAnalytics()}
+                      className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded-lg transition-colors flex items-center"
+                      disabled={analyticsLoading}
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${analyticsLoading ? 'animate-spin' : ''}`} />
+                      Aktualisieren
+                    </button>
+                  </div>
+                </div>
+
+                {analyticsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mr-3" />
+                    <span className="text-gray-600 text-lg">Lade erweiterte Analytik...</span>
+                  </div>
+                ) : advancedAnalytics ? (
+                  <>
+                    {/* Analytics Navigation Tabs */}
+                    <div className="flex border-b border-gray-200 mb-6">
+                      {[
+                        { id: 'overview', label: 'Übersicht', icon: Eye },
+                        { id: 'users', label: 'Benutzer', icon: Users },
+                        { id: 'messages', label: 'Nachrichten', icon: MessageSquare },
+                        { id: 'revenue', label: 'Umsatz', icon: DollarSign },
+                        { id: 'ai', label: 'KI-Nutzung', icon: Brain }
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setSelectedAnalyticsTab(tab.id)}
+                          className={`flex items-center space-x-2 px-6 py-3 border-b-2 font-medium text-sm transition-colors ${
+                            selectedAnalyticsTab === tab.id
+                              ? 'border-blue-500 text-blue-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          <tab.icon className="w-4 h-4" />
+                          <span>{tab.label}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Analytics Content */}
+                    {selectedAnalyticsTab === 'overview' && (
+                      <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-blue-600 font-medium">Konversionsrate</p>
+                                <p className="text-2xl font-bold text-blue-800">{advancedAnalytics.user_analytics.subscription_conversion_rate}%</p>
+                              </div>
+                              <Target className="w-8 h-8 text-blue-500" />
+                            </div>
+                          </div>
+
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-green-600 font-medium">Nutzerretention</p>
+                                <p className="text-2xl font-bold text-green-800">{advancedAnalytics.user_analytics.user_retention_rate}%</p>
+                              </div>
+                              <Activity className="w-8 h-8 text-green-500" />
+                            </div>
+                          </div>
+
+                          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-purple-600 font-medium">Durchschn. Umsatz/User</p>
+                                <p className="text-2xl font-bold text-purple-800">€{advancedAnalytics.revenue_analytics.arpu}</p>
+                              </div>
+                              <TrendingUp className="w-8 h-8 text-purple-500" />
+                            </div>
+                          </div>
+
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-orange-600 font-medium">KI-Adoption</p>
+                                <p className="text-2xl font-bold text-orange-800">{advancedAnalytics.ai_analytics.ai_adoption_rate}%</p>
+                              </div>
+                              <Zap className="w-8 h-8 text-orange-500" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedAnalyticsTab === 'users' && (
+                      <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {/* Registration Trends */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                              <LineChart className="w-5 h-5 mr-2 text-blue-600" />
+                              Registrierungstrends (30 Tage)
+                            </h4>
+                            <div className="space-y-2">
+                              {advancedAnalytics.user_analytics.registration_trends.slice(-5).map((trend, index) => (
+                                <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                                  <span className="text-gray-600">{trend._id}</span>
+                                  <span className="font-medium text-blue-600">{trend.count} Registrierungen</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Top Referrers */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                              <Users className="w-5 h-5 mr-2 text-green-600" />
+                              Top Einladende
+                            </h4>
+                            <div className="space-y-3">
+                              {advancedAnalytics.user_analytics.top_referrers.slice(0, 5).map((referrer, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                  <div>
+                                    <p className="font-medium text-gray-800">{referrer.referrer_name}</p>
+                                    <p className="text-sm text-gray-500">{referrer.referrer_email}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-bold text-green-600">{referrer.referrals}</p>
+                                    <p className="text-xs text-gray-500">Einladungen</p>
+                                  </div>
+                                </div>
+                              ))}
+                              {advancedAnalytics.user_analytics.top_referrers.length === 0 && (
+                                <p className="text-gray-500 text-center py-4">Noch keine Einladungen vorhanden</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Activity Heatmap */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <Activity className="w-5 h-5 mr-2 text-purple-600" />
+                            Nutzeraktivität nach Tageszeit
+                          </h4>
+                          <div className="grid grid-cols-12 gap-2">
+                            {Array.from({ length: 24 }, (_, hour) => {
+                              const hourData = advancedAnalytics.user_analytics.user_activity_heatmap.find(h => h._id === hour);
+                              const count = hourData ? hourData.count : 0;
+                              const maxCount = Math.max(...advancedAnalytics.user_analytics.user_activity_heatmap.map(h => h.count));
+                              const intensity = maxCount > 0 ? (count / maxCount) : 0;
+                              
+                              return (
+                                <div
+                                  key={hour}
+                                  className="text-center p-2 rounded"
+                                  style={{
+                                    backgroundColor: `rgba(59, 130, 246, ${0.1 + intensity * 0.8})`
+                                  }}
+                                  title={`${hour}:00 - ${count} Aktivitäten`}
+                                >
+                                  <div className="text-xs font-medium text-gray-700">{hour}</div>
+                                  <div className="text-xs text-gray-600">{count}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedAnalyticsTab === 'messages' && (
+                      <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {/* Message Creation Patterns */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                              <LineChart className="w-5 h-5 mr-2 text-blue-600" />
+                              Nachrichtenerstellung (30 Tage)
+                            </h4>
+                            <div className="space-y-2">
+                              {advancedAnalytics.message_analytics.creation_patterns.slice(-5).map((pattern, index) => (
+                                <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                                  <span className="text-gray-600">{pattern._id}</span>
+                                  <span className="font-medium text-blue-600">{pattern.count} Nachrichten</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Message Type Distribution */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                              <PieChart className="w-5 h-5 mr-2 text-green-600" />
+                              Nachrichtentypen
+                            </h4>
+                            <div className="space-y-3">
+                              {advancedAnalytics.message_analytics.message_type_distribution.map((type, index) => (
+                                <div key={index} className="flex items-center justify-between">
+                                  <div className="flex items-center">
+                                    <div className={`w-3 h-3 rounded-full mr-3 ${index === 0 ? 'bg-blue-500' : 'bg-green-500'}`}></div>
+                                    <span className="text-gray-700">{type.type}</span>
+                                  </div>
+                                  <span className="font-medium">{type.count}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <div className="text-sm text-gray-600">
+                                <p>Erfolgsrate der Zustellung: <span className="font-medium text-green-600">{advancedAnalytics.message_analytics.delivery_success_rate}%</span></p>
+                                <p>Wiederkehrende Nachrichten: <span className="font-medium text-purple-600">{advancedAnalytics.message_analytics.recurring_vs_oneshot.recurring_percentage}%</span></p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Popular Scheduling Times */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <Clock className="w-5 h-5 mr-2 text-purple-600" />
+                            Beliebte Planungszeiten
+                          </h4>
+                          <div className="grid grid-cols-12 gap-2">
+                            {Array.from({ length: 24 }, (_, hour) => {
+                              const hourData = advancedAnalytics.message_analytics.popular_times.find(h => h._id === hour);
+                              const count = hourData ? hourData.count : 0;
+                              const maxCount = Math.max(...advancedAnalytics.message_analytics.popular_times.map(h => h.count));
+                              const intensity = maxCount > 0 ? (count / maxCount) : 0;
+                              
+                              return (
+                                <div
+                                  key={hour}
+                                  className="text-center p-2 rounded"
+                                  style={{
+                                    backgroundColor: `rgba(147, 51, 234, ${0.1 + intensity * 0.8})`
+                                  }}
+                                  title={`${hour}:00 - ${count} geplante Nachrichten`}
+                                >
+                                  <div className="text-xs font-medium text-gray-700">{hour}</div>
+                                  <div className="text-xs text-gray-600">{count}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedAnalyticsTab === 'revenue' && (
+                      <div className="space-y-6">
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div className="text-center">
+                              <p className="text-sm text-green-600 font-medium">Durchschn. Umsatz/User</p>
+                              <p className="text-2xl font-bold text-green-800">€{advancedAnalytics.revenue_analytics.arpu}</p>
+                            </div>
+                          </div>
+
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div className="text-center">
+                              <p className="text-sm text-red-600 font-medium">Abwanderungsrate</p>
+                              <p className="text-2xl font-bold text-red-800">{advancedAnalytics.revenue_analytics.churn_rate}%</p>
+                            </div>
+                          </div>
+
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="text-center">
+                              <p className="text-sm text-blue-600 font-medium">Wachstumsrate</p>
+                              <p className="text-2xl font-bold text-blue-800">{advancedAnalytics.revenue_analytics.subscription_growth_rate}%</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {/* MRR Trend */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                              <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
+                              Monatliche Umsätze (MRR)
+                            </h4>
+                            <div className="space-y-2">
+                              {advancedAnalytics.revenue_analytics.mrr_trend.slice(-6).map((trend, index) => (
+                                <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                                  <span className="text-gray-600">{trend._id}</span>
+                                  <span className="font-medium text-green-600">€{trend.revenue?.toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Revenue by Plan */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                              <PieChart className="w-5 h-5 mr-2 text-purple-600" />
+                              Umsatz nach Plan
+                            </h4>
+                            <div className="space-y-3">
+                              {advancedAnalytics.revenue_analytics.revenue_by_plan.map((plan, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                  <div>
+                                    <p className="font-medium text-gray-800 capitalize">{plan._id}</p>
+                                    <p className="text-sm text-gray-500">{plan.subscribers} Abonnenten</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-bold text-green-600">€{plan.revenue?.toFixed(2)}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedAnalyticsTab === 'ai' && (
+                      <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div className="text-center">
+                              <p className="text-sm text-purple-600 font-medium">KI-Erfolgsrate</p>
+                              <p className="text-2xl font-bold text-purple-800">{advancedAnalytics.ai_analytics.generation_success_rate}%</p>
+                            </div>
+                          </div>
+
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="text-center">
+                              <p className="text-sm text-blue-600 font-medium">KI-Adoptionsrate</p>
+                              <p className="text-2xl font-bold text-blue-800">{advancedAnalytics.ai_analytics.ai_adoption_rate}%</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {/* Feature Usage */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                              <Brain className="w-5 h-5 mr-2 text-purple-600" />
+                              KI-Feature Nutzung
+                            </h4>
+                            <div className="space-y-3">
+                              {advancedAnalytics.ai_analytics.feature_usage.map((feature, index) => (
+                                <div key={index} className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-700">{feature.feature}</span>
+                                    <span className="font-medium">{feature.percentage}%</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className="bg-purple-600 h-2 rounded-full" 
+                                      style={{ width: `${feature.percentage}%` }}
+                                    ></div>
+                                  </div>
+                                  <div className="text-xs text-gray-500">{feature.usage_count} Verwendungen</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Popular Prompts */}
+                          <div className="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                              <Lightbulb className="w-5 h-5 mr-2 text-yellow-600" />
+                              Beliebte Prompts
+                            </h4>
+                            <div className="space-y-3">
+                              {advancedAnalytics.ai_analytics.popular_prompts.map((prompt, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                  <span className="text-gray-700">{prompt.prompt_type}</span>
+                                  <span className="font-medium text-yellow-600">{prompt.usage_count}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Enhancement Types */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                            <Wand2 className="w-5 h-5 mr-2 text-green-600" />
+                            Text-Verbesserungen
+                          </h4>
+                          <div className="grid md:grid-cols-4 gap-4">
+                            {advancedAnalytics.ai_analytics.enhancement_types.map((enhancement, index) => (
+                              <div key={index} className="text-center p-4 bg-gray-50 rounded-lg">
+                                <p className="text-lg font-bold text-gray-800">{enhancement.count}</p>
+                                <p className="text-sm text-gray-600">{enhancement.type}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 text-lg">Erweiterte Analytik nicht verfügbar</p>
+                    <p className="text-gray-400">Laden Sie die Daten neu oder überprüfen Sie Ihre Berechtigung.</p>
+                  </div>
+                )}
+              </div>
+
               {/* Bank Payout Section */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
