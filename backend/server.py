@@ -263,6 +263,117 @@ def calculate_next_occurrence(scheduled_time: datetime, pattern: str) -> datetim
             return scheduled_time.replace(month=scheduled_time.month + 1)
     return scheduled_time
 
+# AI Service Functions
+async def generate_message_with_ai(prompt: str, tone: str = "freundlich", occasion: str = None) -> str:
+    """Generate message content using OpenAI"""
+    if not openai_client:
+        raise HTTPException(status_code=503, detail="AI-Service ist nicht verfügbar")
+    
+    try:
+        # Build the system prompt based on tone and occasion
+        tone_instructions = {
+            "freundlich": "in einem freundlichen und warmen Ton",
+            "professionell": "in einem professionellen und geschäftsmäßigen Ton",
+            "humorvoll": "in einem humorvollen und lockeren Ton",
+            "höflich": "in einem höflichen und respektvollen Ton"
+        }
+        
+        occasion_context = {
+            "meeting": "für eine Meeting-Erinnerung",
+            "geburtstag": "für eine Geburtstagsnachricht",
+            "erinnerung": "für eine allgemeine Erinnerung",
+            "zahlung": "für eine höfliche Zahlungserinnerung",
+            "termin": "für eine Terminerinnerung",
+            "event": "für eine Veranstaltungseinladung"
+        }
+        
+        system_prompt = f"""Du bist ein Assistent, der personalisierte Nachrichten erstellt. 
+        Erstelle eine Nachricht auf Deutsch {tone_instructions.get(tone, 'in einem freundlichen Ton')}.
+        
+        {f'Kontext: Die Nachricht ist {occasion_context.get(occasion, "für einen allgemeinen Zweck")}.' if occasion else ''}
+        
+        Halte die Nachricht präzise aber herzlich. Verwende angemessene Emojis wenn passend.
+        Antworte nur mit der Nachricht selbst, ohne zusätzliche Erklärungen."""
+        
+        response = await openai_client.chat.completions.acreate(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=300,
+            temperature=0.7
+        )
+        
+        return response.choices[0].message.content.strip()
+        
+    except Exception as e:
+        logger.error(f"AI generation error: {e}")
+        raise HTTPException(status_code=500, detail="AI-Generierung fehlgeschlagen")
+
+async def enhance_message_with_ai(text: str, action: str, tone: str = "freundlich", target_language: str = "deutsch") -> str:
+    """Enhance existing message content using OpenAI"""
+    if not openai_client:
+        raise HTTPException(status_code=503, detail="AI-Service ist nicht verfügbar")
+    
+    try:
+        action_prompts = {
+            "improve": f"Verbessere diesen Text und mache ihn ansprechender in einem {tone}en Ton:",
+            "correct": "Korrigiere Rechtschreibung und Grammatik in diesem Text:",
+            "shorten": "Kürze diesen Text auf das Wesentliche:",
+            "lengthen": f"Erweitere diesen Text mit mehr Details in einem {tone}en Ton:",
+            "translate": f"Übersetze diesen Text ins {target_language.capitalize()}:",
+            "professional": "Formuliere diesen Text professioneller um:",
+            "friendly": "Formuliere diesen Text freundlicher um:"
+        }
+        
+        system_prompt = f"""Du bist ein Textbearbeitungs-Assistent. 
+        {action_prompts.get(action, 'Verbessere diesen Text:')}
+        
+        Antworte nur mit dem bearbeiteten Text, ohne zusätzliche Erklärungen."""
+        
+        response = await openai_client.chat.completions.acreate(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text}
+            ],
+            max_tokens=400,
+            temperature=0.5
+        )
+        
+        return response.choices[0].message.content.strip()
+        
+    except Exception as e:
+        logger.error(f"AI enhancement error: {e}")
+        raise HTTPException(status_code=500, detail="AI-Verbesserung fehlgeschlagen")
+
+async def get_message_suggestions(user_plan: str) -> List[dict]:
+    """Get AI-powered message suggestions based on user plan"""
+    if not openai_client:
+        return []
+    
+    base_suggestions = [
+        {"prompt": "Erstelle eine Meeting-Erinnerung für morgen 14:00", "occasion": "meeting", "tone": "professionell"},
+        {"prompt": "Schreibe eine Geburtstagsnachricht für einen Freund", "occasion": "geburtstag", "tone": "freundlich"},
+        {"prompt": "Erstelle eine Terminerinnerung für den Zahnarzt", "occasion": "termin", "tone": "freundlich"},
+    ]
+    
+    if user_plan in ["premium", "business"]:
+        base_suggestions.extend([
+            {"prompt": "Formuliere eine höfliche Zahlungserinnerung", "occasion": "zahlung", "tone": "höflich"},
+            {"prompt": "Erstelle eine Einladung zu unserem Team-Event", "occasion": "event", "tone": "humorvoll"},
+            {"prompt": "Schreibe eine Projektstatus-Erinnerung", "occasion": "meeting", "tone": "professionell"},
+        ])
+    
+    if user_plan == "business":
+        base_suggestions.extend([
+            {"prompt": "Erstelle eine Kundentermin-Bestätigung", "occasion": "termin", "tone": "professionell"},
+            {"prompt": "Formuliere eine Folge-Erinnerung nach Meeting", "occasion": "meeting", "tone": "professionell"},
+        ])
+    
+    return base_suggestions
+
 # Background scheduler function
 async def message_scheduler():
     global scheduler_running
