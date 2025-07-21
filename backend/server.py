@@ -549,6 +549,13 @@ async def register(user: UserCreate):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
+    # Validate referral code if provided
+    referrer = None
+    if user.referral_code:
+        referrer = await db.users.find_one({"referral_code": user.referral_code.upper()})
+        if not referrer:
+            raise HTTPException(status_code=400, detail="Ungültiger Referral-Code")
+    
     # Create new user
     hashed_password = get_password_hash(user.password)
     
@@ -559,10 +566,18 @@ async def register(user: UserCreate):
         email=user.email,
         name=user.name,
         hashed_password=hashed_password,
-        role=role
+        role=role,
+        referred_by=user.referral_code.upper() if user.referral_code else None
     )
     
     await db.users.insert_one(new_user.dict())
+    
+    # Give referral bonus (bonus messages) if referred
+    if referrer:
+        await db.users.update_one(
+            {"id": referrer["id"]},
+            {"$inc": {"monthly_message_count": -5}}  # Give 5 bonus messages
+        )
     
     # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -573,7 +588,7 @@ async def register(user: UserCreate):
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=get_user_response(new_user)
+        user=await get_user_response(new_user)
     )
 
 @api_router.post("/auth/login", response_model=Token)
