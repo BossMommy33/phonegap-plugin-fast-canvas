@@ -1518,8 +1518,8 @@ class PremiumSubscriptionTester:
                     print(f"   Error deleting message {message_id}: {e}")
     
     def run_all_tests(self):
-        """Run all premium subscription system tests including AI features"""
-        print("🚀 Starting AI-Enhanced Premium Subscription System Tests\n")
+        """Run all premium subscription system tests including AI features and Admin Finance Dashboard"""
+        print("🚀 Starting AI-Enhanced Premium Subscription System + Admin Finance Dashboard Tests\n")
         
         # Test sequence
         tests = [
@@ -1542,6 +1542,16 @@ class PremiumSubscriptionTester:
             ("AI Suggestions by Plan", self.test_ai_suggestions_by_plan),
             ("AI Integration with Messages", self.test_ai_integration_with_messages),
             ("AI Error Handling", self.test_ai_error_handling),
+            # Admin Finance Dashboard Tests
+            ("Admin User Creation", self.test_admin_user_creation),
+            ("Admin Authorization Protection", self.test_admin_authorization_protection),
+            ("Admin Stats Endpoint", self.test_admin_stats_endpoint),
+            ("Admin Users Endpoint", self.test_admin_users_endpoint),
+            ("Admin Transactions Endpoint", self.test_admin_transactions_endpoint),
+            ("Payout System Validation", self.test_payout_system_validation),
+            ("Payout History Endpoint", self.test_payout_history_endpoint),
+            ("User Role Management", self.test_user_role_management),
+            ("Admin Balance Calculations", self.test_admin_balance_calculations),
         ]
         
         passed = 0
@@ -1557,11 +1567,11 @@ class PremiumSubscriptionTester:
         
         # Summary
         print(f"\n{'='*70}")
-        print(f"🎯 AI-ENHANCED PREMIUM SUBSCRIPTION SYSTEM TEST SUMMARY: {passed}/{total} tests passed")
+        print(f"🎯 COMPLETE SYSTEM TEST SUMMARY: {passed}/{total} tests passed")
         print(f"{'='*70}")
         
         if passed == total:
-            print("🎉 All tests passed! AI-enhanced premium subscription system is working correctly.")
+            print("🎉 All tests passed! Complete system including Admin Finance Dashboard is working correctly.")
         else:
             print("⚠️  Some tests failed. Check the details above.")
             
