@@ -933,6 +933,571 @@ class PremiumSubscriptionTester:
         except Exception as e:
             self.log_result("AI Error Handling", False, f"Error: {str(e)}")
             return False
+
+    # ===== ADMIN FINANCE DASHBOARD TESTS =====
+    
+    def test_admin_user_creation(self):
+        """Test admin user creation and authentication"""
+        try:
+            # Create admin user (admin@zeitgesteuerte.de should get admin role automatically)
+            admin_data = {
+                "email": "admin@zeitgesteuerte.de",
+                "password": "AdminPassword123!",
+                "name": "Admin User"
+            }
+            
+            response = requests.post(f"{API_BASE}/auth/register", json=admin_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                user_info = data.get('user', {})
+                
+                if user_info.get('role') == 'admin' and user_info.get('email') == admin_data['email']:
+                    # Store admin user for later tests
+                    self.test_users['admin_user'] = {
+                        'email': admin_data['email'],
+                        'password': admin_data['password'],
+                        'token': data['access_token'],
+                        'user_id': user_info['id']
+                    }
+                    
+                    self.log_result("Admin User Creation", True, 
+                                  "Admin user created with admin role automatically")
+                    return True
+                else:
+                    self.log_result("Admin User Creation", False, 
+                                  f"Admin role not assigned automatically. Role: {user_info.get('role')}")
+                    return False
+            else:
+                # Admin user might already exist, try to login
+                login_response = requests.post(f"{API_BASE}/auth/login", json={
+                    "email": admin_data['email'],
+                    "password": admin_data['password']
+                })
+                
+                if login_response.status_code == 200:
+                    data = login_response.json()
+                    user_info = data.get('user', {})
+                    
+                    if user_info.get('role') == 'admin':
+                        self.test_users['admin_user'] = {
+                            'email': admin_data['email'],
+                            'password': admin_data['password'],
+                            'token': data['access_token'],
+                            'user_id': user_info['id']
+                        }
+                        
+                        self.log_result("Admin User Creation", True, 
+                                      "Admin user login successful with admin role")
+                        return True
+                    else:
+                        self.log_result("Admin User Creation", False, 
+                                      f"User exists but not admin. Role: {user_info.get('role')}")
+                        return False
+                else:
+                    self.log_result("Admin User Creation", False, 
+                                  f"Registration failed and login failed: {response.status_code}")
+                    return False
+                
+        except Exception as e:
+            self.log_result("Admin User Creation", False, f"Error: {str(e)}")
+            return False
+    
+    def test_admin_authorization_protection(self):
+        """Test admin endpoints require admin role"""
+        if 'free_user' not in self.test_users:
+            self.log_result("Admin Authorization Protection", False, "No regular user available")
+            return False
+            
+        try:
+            user = self.test_users['free_user']
+            headers = {"Authorization": f"Bearer {user['token']}"}
+            
+            # Test admin endpoints with regular user token
+            admin_endpoints = [
+                ("GET", f"{API_BASE}/admin/stats"),
+                ("GET", f"{API_BASE}/admin/users"),
+                ("GET", f"{API_BASE}/admin/transactions"),
+                ("GET", f"{API_BASE}/admin/payouts"),
+                ("POST", f"{API_BASE}/admin/payout", {"amount": 10.0, "description": "test"})
+            ]
+            
+            forbidden_count = 0
+            for method, url, *data in admin_endpoints:
+                if method == "POST":
+                    response = requests.post(url, json=data[0] if data else {}, headers=headers)
+                else:
+                    response = requests.get(url, headers=headers)
+                
+                if response.status_code == 403:
+                    if "admin" in response.text.lower():
+                        forbidden_count += 1
+                    else:
+                        print(f"   {method} {url}: Wrong 403 error message")
+                else:
+                    print(f"   {method} {url}: Expected 403, got {response.status_code}")
+            
+            if forbidden_count == len(admin_endpoints):
+                self.log_result("Admin Authorization Protection", True, 
+                              "All admin endpoints properly protected")
+                return True
+            else:
+                self.log_result("Admin Authorization Protection", False, 
+                              f"Only {forbidden_count}/{len(admin_endpoints)} endpoints protected")
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Authorization Protection", False, f"Error: {str(e)}")
+            return False
+    
+    def test_admin_stats_endpoint(self):
+        """Test admin statistics endpoint"""
+        if 'admin_user' not in self.test_users:
+            self.log_result("Admin Stats Endpoint", False, "No admin user available")
+            return False
+            
+        try:
+            admin = self.test_users['admin_user']
+            headers = {"Authorization": f"Bearer {admin['token']}"}
+            
+            response = requests.get(f"{API_BASE}/admin/stats", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check required fields
+                required_fields = [
+                    'total_users', 'premium_users', 'business_users',
+                    'total_revenue', 'monthly_revenue', 'messages_sent_today',
+                    'messages_sent_month', 'available_balance', 'pending_payouts'
+                ]
+                
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    # Validate data types
+                    numeric_fields = ['total_users', 'premium_users', 'business_users', 'messages_sent_today', 'messages_sent_month']
+                    float_fields = ['total_revenue', 'monthly_revenue', 'available_balance', 'pending_payouts']
+                    
+                    valid_types = True
+                    for field in numeric_fields:
+                        if not isinstance(data[field], int):
+                            valid_types = False
+                            print(f"   {field} should be int, got {type(data[field])}")
+                    
+                    for field in float_fields:
+                        if not isinstance(data[field], (int, float)):
+                            valid_types = False
+                            print(f"   {field} should be float, got {type(data[field])}")
+                    
+                    if valid_types:
+                        # Check business logic
+                        if data['available_balance'] >= 0 and data['pending_payouts'] >= 0:
+                            self.log_result("Admin Stats Endpoint", True, 
+                                          f"Stats retrieved: {data['total_users']} users, €{data['total_revenue']:.2f} revenue")
+                            return True
+                        else:
+                            self.log_result("Admin Stats Endpoint", False, 
+                                          "Invalid balance calculations")
+                            return False
+                    else:
+                        self.log_result("Admin Stats Endpoint", False, "Invalid data types")
+                        return False
+                else:
+                    self.log_result("Admin Stats Endpoint", False, f"Missing fields: {missing_fields}")
+                    return False
+            else:
+                self.log_result("Admin Stats Endpoint", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Stats Endpoint", False, f"Error: {str(e)}")
+            return False
+    
+    def test_admin_users_endpoint(self):
+        """Test admin users list endpoint"""
+        if 'admin_user' not in self.test_users:
+            self.log_result("Admin Users Endpoint", False, "No admin user available")
+            return False
+            
+        try:
+            admin = self.test_users['admin_user']
+            headers = {"Authorization": f"Bearer {admin['token']}"}
+            
+            response = requests.get(f"{API_BASE}/admin/users", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if 'users' in data and isinstance(data['users'], list):
+                    users = data['users']
+                    
+                    if len(users) > 0:
+                        # Check that passwords are not included
+                        first_user = users[0]
+                        if 'hashed_password' not in first_user and 'password' not in first_user:
+                            # Check required user fields
+                            required_fields = ['id', 'email', 'name', 'role', 'subscription_plan']
+                            if all(field in first_user for field in required_fields):
+                                self.log_result("Admin Users Endpoint", True, 
+                                              f"Retrieved {len(users)} users without passwords")
+                                return True
+                            else:
+                                missing = [f for f in required_fields if f not in first_user]
+                                self.log_result("Admin Users Endpoint", False, f"Missing user fields: {missing}")
+                                return False
+                        else:
+                            self.log_result("Admin Users Endpoint", False, "Password data exposed")
+                            return False
+                    else:
+                        self.log_result("Admin Users Endpoint", True, "No users found (empty database)")
+                        return True
+                else:
+                    self.log_result("Admin Users Endpoint", False, "Invalid response format")
+                    return False
+            else:
+                self.log_result("Admin Users Endpoint", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Users Endpoint", False, f"Error: {str(e)}")
+            return False
+    
+    def test_admin_transactions_endpoint(self):
+        """Test admin transactions endpoint"""
+        if 'admin_user' not in self.test_users:
+            self.log_result("Admin Transactions Endpoint", False, "No admin user available")
+            return False
+            
+        try:
+            admin = self.test_users['admin_user']
+            headers = {"Authorization": f"Bearer {admin['token']}"}
+            
+            response = requests.get(f"{API_BASE}/admin/transactions", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if 'transactions' in data and isinstance(data['transactions'], list):
+                    transactions = data['transactions']
+                    
+                    if len(transactions) > 0:
+                        # Check transaction structure and user data enrichment
+                        first_transaction = transactions[0]
+                        required_fields = ['id', 'user_id', 'amount', 'currency', 'subscription_plan', 'payment_status']
+                        
+                        if all(field in first_transaction for field in required_fields):
+                            # Check if user information is enriched
+                            if 'user_email' in first_transaction or 'user_name' in first_transaction:
+                                self.log_result("Admin Transactions Endpoint", True, 
+                                              f"Retrieved {len(transactions)} transactions with user details")
+                                return True
+                            else:
+                                self.log_result("Admin Transactions Endpoint", True, 
+                                              f"Retrieved {len(transactions)} transactions (no user enrichment)")
+                                return True
+                        else:
+                            missing = [f for f in required_fields if f not in first_transaction]
+                            self.log_result("Admin Transactions Endpoint", False, f"Missing transaction fields: {missing}")
+                            return False
+                    else:
+                        self.log_result("Admin Transactions Endpoint", True, "No transactions found")
+                        return True
+                else:
+                    self.log_result("Admin Transactions Endpoint", False, "Invalid response format")
+                    return False
+            else:
+                self.log_result("Admin Transactions Endpoint", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Transactions Endpoint", False, f"Error: {str(e)}")
+            return False
+    
+    def test_payout_system_validation(self):
+        """Test payout system validation and balance checks"""
+        if 'admin_user' not in self.test_users:
+            self.log_result("Payout System Validation", False, "No admin user available")
+            return False
+            
+        try:
+            admin = self.test_users['admin_user']
+            headers = {"Authorization": f"Bearer {admin['token']}"}
+            
+            # First get current stats to understand available balance
+            stats_response = requests.get(f"{API_BASE}/admin/stats", headers=headers)
+            if stats_response.status_code != 200:
+                self.log_result("Payout System Validation", False, "Cannot get admin stats")
+                return False
+            
+            stats = stats_response.json()
+            available_balance = stats.get('available_balance', 0)
+            
+            # Test 1: Request payout amount higher than available balance
+            excessive_amount = available_balance + 1000.0
+            payout_request = {
+                "amount": excessive_amount,
+                "description": "Test excessive payout"
+            }
+            
+            response = requests.post(f"{API_BASE}/admin/payout", json=payout_request, headers=headers)
+            
+            if response.status_code == 400:
+                if "nicht genügend" in response.text.lower() or "insufficient" in response.text.lower():
+                    excessive_amount_blocked = True
+                else:
+                    excessive_amount_blocked = False
+                    print(f"   Wrong error message for excessive amount: {response.text}")
+            else:
+                excessive_amount_blocked = False
+                print(f"   Expected 400 for excessive amount, got {response.status_code}")
+            
+            # Test 2: Request valid payout amount (if balance allows)
+            if available_balance >= 10.0:
+                valid_amount = min(10.0, available_balance * 0.1)  # Request 10% of available or €10
+                payout_request = {
+                    "amount": valid_amount,
+                    "description": "Test valid payout request"
+                }
+                
+                response = requests.post(f"{API_BASE}/admin/payout", json=payout_request, headers=headers)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if ('payout_id' in data and 
+                        data.get('amount') == valid_amount and
+                        data.get('status') == 'pending'):
+                        valid_payout_created = True
+                        payout_id = data['payout_id']
+                        print(f"   Created payout {payout_id} for €{valid_amount}")
+                    else:
+                        valid_payout_created = False
+                        print(f"   Invalid payout response: {data}")
+                else:
+                    valid_payout_created = False
+                    print(f"   Valid payout failed: HTTP {response.status_code} - {response.text}")
+            else:
+                valid_payout_created = True  # Skip if no balance
+                print(f"   Skipping valid payout test (insufficient balance: €{available_balance})")
+            
+            # Test 3: Test minimum amount validation (if implemented)
+            small_amount_request = {
+                "amount": 0.01,  # Very small amount
+                "description": "Test minimum amount"
+            }
+            
+            response = requests.post(f"{API_BASE}/admin/payout", json=small_amount_request, headers=headers)
+            
+            # This might be accepted or rejected depending on implementation
+            if response.status_code in [200, 400]:
+                minimum_amount_handled = True
+            else:
+                minimum_amount_handled = False
+                print(f"   Unexpected response for small amount: {response.status_code}")
+            
+            if excessive_amount_blocked and valid_payout_created and minimum_amount_handled:
+                self.log_result("Payout System Validation", True, 
+                              "Payout validation working correctly")
+                return True
+            else:
+                self.log_result("Payout System Validation", False, 
+                              f"Validation issues: excessive={excessive_amount_blocked}, valid={valid_payout_created}, minimum={minimum_amount_handled}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Payout System Validation", False, f"Error: {str(e)}")
+            return False
+    
+    def test_payout_history_endpoint(self):
+        """Test payout history endpoint"""
+        if 'admin_user' not in self.test_users:
+            self.log_result("Payout History Endpoint", False, "No admin user available")
+            return False
+            
+        try:
+            admin = self.test_users['admin_user']
+            headers = {"Authorization": f"Bearer {admin['token']}"}
+            
+            response = requests.get(f"{API_BASE}/admin/payouts", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if 'payouts' in data and isinstance(data['payouts'], list):
+                    payouts = data['payouts']
+                    
+                    if len(payouts) > 0:
+                        # Check payout structure
+                        first_payout = payouts[0]
+                        required_fields = ['id', 'admin_user_id', 'amount', 'description', 'status', 'requested_at']
+                        
+                        if all(field in first_payout for field in required_fields):
+                            # Check if admin user information is enriched
+                            if 'admin_email' in first_payout or 'admin_name' in first_payout:
+                                self.log_result("Payout History Endpoint", True, 
+                                              f"Retrieved {len(payouts)} payouts with admin details")
+                                return True
+                            else:
+                                self.log_result("Payout History Endpoint", True, 
+                                              f"Retrieved {len(payouts)} payouts (no admin enrichment)")
+                                return True
+                        else:
+                            missing = [f for f in required_fields if f not in first_payout]
+                            self.log_result("Payout History Endpoint", False, f"Missing payout fields: {missing}")
+                            return False
+                    else:
+                        self.log_result("Payout History Endpoint", True, "No payouts found")
+                        return True
+                else:
+                    self.log_result("Payout History Endpoint", False, "Invalid response format")
+                    return False
+            else:
+                self.log_result("Payout History Endpoint", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Payout History Endpoint", False, f"Error: {str(e)}")
+            return False
+    
+    def test_user_role_management(self):
+        """Test user role management functionality"""
+        if 'admin_user' not in self.test_users or 'free_user' not in self.test_users:
+            self.log_result("User Role Management", False, "Missing required users")
+            return False
+            
+        try:
+            admin = self.test_users['admin_user']
+            regular_user = self.test_users['free_user']
+            headers = {"Authorization": f"Bearer {admin['token']}"}
+            
+            # Test 1: Promote regular user to admin
+            role_update = {"role": "admin"}
+            response = requests.put(f"{API_BASE}/admin/users/{regular_user['user_id']}/role", 
+                                  json=role_update, headers=headers)
+            
+            if response.status_code == 200:
+                promote_success = True
+                print(f"   Successfully promoted user to admin")
+            else:
+                promote_success = False
+                print(f"   Failed to promote user: HTTP {response.status_code} - {response.text}")
+            
+            # Test 2: Demote user back to regular user
+            role_update = {"role": "user"}
+            response = requests.put(f"{API_BASE}/admin/users/{regular_user['user_id']}/role", 
+                                  json=role_update, headers=headers)
+            
+            if response.status_code == 200:
+                demote_success = True
+                print(f"   Successfully demoted user back to regular user")
+            else:
+                demote_success = False
+                print(f"   Failed to demote user: HTTP {response.status_code} - {response.text}")
+            
+            # Test 3: Try invalid role
+            role_update = {"role": "invalid_role"}
+            response = requests.put(f"{API_BASE}/admin/users/{regular_user['user_id']}/role", 
+                                  json=role_update, headers=headers)
+            
+            if response.status_code == 400:
+                if "ungültige" in response.text.lower() or "invalid" in response.text.lower():
+                    invalid_role_blocked = True
+                else:
+                    invalid_role_blocked = False
+                    print(f"   Wrong error message for invalid role: {response.text}")
+            else:
+                invalid_role_blocked = False
+                print(f"   Expected 400 for invalid role, got {response.status_code}")
+            
+            # Test 4: Try non-existent user
+            fake_user_id = str(uuid.uuid4())
+            role_update = {"role": "user"}
+            response = requests.put(f"{API_BASE}/admin/users/{fake_user_id}/role", 
+                                  json=role_update, headers=headers)
+            
+            if response.status_code == 404:
+                user_not_found_handled = True
+            else:
+                user_not_found_handled = False
+                print(f"   Expected 404 for non-existent user, got {response.status_code}")
+            
+            if promote_success and demote_success and invalid_role_blocked and user_not_found_handled:
+                self.log_result("User Role Management", True, 
+                              "User role management working correctly")
+                return True
+            else:
+                self.log_result("User Role Management", False, 
+                              f"Role management issues: promote={promote_success}, demote={demote_success}, invalid_blocked={invalid_role_blocked}, not_found={user_not_found_handled}")
+                return False
+                
+        except Exception as e:
+            self.log_result("User Role Management", False, f"Error: {str(e)}")
+            return False
+    
+    def test_admin_balance_calculations(self):
+        """Test admin balance calculations and business logic"""
+        if 'admin_user' not in self.test_users:
+            self.log_result("Admin Balance Calculations", False, "No admin user available")
+            return False
+            
+        try:
+            admin = self.test_users['admin_user']
+            headers = {"Authorization": f"Bearer {admin['token']}"}
+            
+            # Get current stats
+            response = requests.get(f"{API_BASE}/admin/stats", headers=headers)
+            if response.status_code != 200:
+                self.log_result("Admin Balance Calculations", False, "Cannot get admin stats")
+                return False
+            
+            stats = response.json()
+            
+            # Validate balance calculations
+            total_revenue = stats.get('total_revenue', 0)
+            available_balance = stats.get('available_balance', 0)
+            pending_payouts = stats.get('pending_payouts', 0)
+            
+            # Check if available balance is calculated correctly (85% of total revenue)
+            expected_available = total_revenue * 0.85
+            balance_calculation_correct = abs(available_balance - expected_available + pending_payouts) < 0.01
+            
+            # Check monthly vs total revenue logic
+            monthly_revenue = stats.get('monthly_revenue', 0)
+            monthly_vs_total_valid = monthly_revenue <= total_revenue
+            
+            # Check user counts make sense
+            total_users = stats.get('total_users', 0)
+            premium_users = stats.get('premium_users', 0)
+            business_users = stats.get('business_users', 0)
+            user_counts_valid = (premium_users + business_users) <= total_users
+            
+            # Check message counts are non-negative
+            messages_today = stats.get('messages_sent_today', 0)
+            messages_month = stats.get('messages_sent_month', 0)
+            message_counts_valid = messages_today >= 0 and messages_month >= 0 and messages_today <= messages_month
+            
+            if (balance_calculation_correct and monthly_vs_total_valid and 
+                user_counts_valid and message_counts_valid):
+                self.log_result("Admin Balance Calculations", True, 
+                              f"Balance calculations correct: €{available_balance:.2f} available from €{total_revenue:.2f} total")
+                return True
+            else:
+                issues = []
+                if not balance_calculation_correct:
+                    issues.append(f"balance_calc (expected ~{expected_available:.2f}, got {available_balance:.2f})")
+                if not monthly_vs_total_valid:
+                    issues.append(f"monthly_revenue ({monthly_revenue}) > total_revenue ({total_revenue})")
+                if not user_counts_valid:
+                    issues.append(f"user_counts ({premium_users}+{business_users} > {total_users})")
+                if not message_counts_valid:
+                    issues.append(f"message_counts (today:{messages_today}, month:{messages_month})")
+                
+                self.log_result("Admin Balance Calculations", False, f"Calculation issues: {', '.join(issues)}")
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Balance Calculations", False, f"Error: {str(e)}")
+            return False
     
     def cleanup(self):
         """Clean up test data"""
