@@ -263,7 +263,7 @@ const AuthPage = () => {
                 />
                 {formData.referralCode && (
                   <p className="text-xs text-green-600 mt-1">
-                    🎁 Sie erhalten 5 Bonus-Nachrichten bei der Registrierung!
+                    {t('auth.referralBonus')}
                   </p>
                 )}
               </div>
@@ -272,21 +272,21 @@ const AuthPage = () => {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              E-Mail
+              {t('auth.email')}
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="ihre@email.de"
+              placeholder={t('auth.email').toLowerCase() + "@example.com"}
               required
             />
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Passwort
+              {t('auth.password')}
             </label>
             <input
               type="password"
