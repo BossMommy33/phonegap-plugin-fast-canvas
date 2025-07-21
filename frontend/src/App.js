@@ -552,6 +552,7 @@ const Dashboard = () => {
       setPayoutAmount('');
       fetchAdminStats();
       fetchAdminData();
+      fetchAdvancedAnalytics();
       alert(`Auszahlung von €${amount} wurde erfolgreich angefordert!`);
     } catch (error) {
       alert(error.response?.data?.detail || 'Fehler bei der Auszahlungsanforderung');
