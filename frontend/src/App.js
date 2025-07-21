@@ -2281,11 +2281,13 @@ const SubscriptionSuccess = () => {
 // Main App Component
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AuthWrapper />
-      </BrowserRouter>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AuthWrapper />
+        </BrowserRouter>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 
