@@ -1175,6 +1175,231 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Admin Dashboard Tab */}
+        {activeTab === 'admin' && user?.role === 'admin' && (
+          <div className="space-y-6">
+            {/* Admin Stats Overview */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                <Shield className="w-6 h-6 mr-2 text-purple-600" />
+                Admin Dashboard
+              </h2>
+              
+              {adminStats ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-blue-600 font-medium">Benutzer Gesamt</p>
+                        <p className="text-2xl font-bold text-blue-800">{adminStats.total_users}</p>
+                      </div>
+                      <Users className="w-8 h-8 text-blue-500" />
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Monatserlös</p>
+                        <p className="text-2xl font-bold text-green-800">€{adminStats.monthly_revenue.toFixed(2)}</p>
+                      </div>
+                      <TrendingUp className="w-8 h-8 text-green-500" />
+                    </div>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-yellow-600 font-medium">Verfügbares Guthaben</p>
+                        <p className="text-2xl font-bold text-yellow-800">€{adminStats.available_balance.toFixed(2)}</p>
+                      </div>
+                      <DollarSign className="w-8 h-8 text-yellow-500" />
+                    </div>
+                  </div>
+
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-purple-600 font-medium">Premium Kunden</p>
+                        <p className="text-2xl font-bold text-purple-800">{adminStats.premium_users + adminStats.business_users}</p>
+                      </div>
+                      <Crown className="w-8 h-8 text-purple-500" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-6 h-6 text-gray-400 animate-spin mr-2" />
+                  <span className="text-gray-500">Lade Statistiken...</span>
+                </div>
+              )}
+
+              {/* Bank Payout Section */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <DollarSign className="w-5 h-5 mr-2 text-green-600" />
+                  Bank-Auszahlung
+                </h3>
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <div className="grid md:grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-sm text-green-700">Gesamteinnahmen</p>
+                      <p className="text-xl font-bold text-green-800">
+                        €{adminStats?.total_revenue.toFixed(2) || '0.00'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-green-700">Verfügbar für Auszahlung</p>
+                      <p className="text-xl font-bold text-green-800">
+                        €{adminStats?.available_balance.toFixed(2) || '0.00'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-orange-700">Ausstehende Auszahlungen</p>
+                      <p className="text-xl font-bold text-orange-800">
+                        €{adminStats?.pending_payouts.toFixed(2) || '0.00'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="number"
+                    value={payoutAmount}
+                    onChange={(e) => setPayoutAmount(e.target.value)}
+                    placeholder="Auszahlungsbetrag in €"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    min="10"
+                    max={adminStats?.available_balance || 0}
+                    step="0.01"
+                  />
+                  <button
+                    onClick={requestPayout}
+                    disabled={payoutLoading || !payoutAmount || parseFloat(payoutAmount) <= 0}
+                    className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center"
+                  >
+                    {payoutLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    {payoutLoading ? 'Wird bearbeitet...' : 'Auszahlung anfordern'}
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-2">
+                  Mindestbetrag: €10.00 • Bearbeitungszeit: 1-3 Werktage
+                </p>
+              </div>
+            </div>
+
+            {/* Recent Transactions */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <FileText className="w-5 h-5 mr-2 text-blue-600" />
+                Neueste Transaktionen
+              </h3>
+              
+              {adminData.transactions.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left p-3 font-medium text-gray-700">Datum</th>
+                        <th className="text-left p-3 font-medium text-gray-700">Kunde</th>
+                        <th className="text-left p-3 font-medium text-gray-700">Plan</th>
+                        <th className="text-left p-3 font-medium text-gray-700">Betrag</th>
+                        <th className="text-left p-3 font-medium text-gray-700">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminData.transactions.slice(0, 10).map((transaction, index) => (
+                        <tr key={index} className="border-t border-gray-200">
+                          <td className="p-3">
+                            {new Date(transaction.created_at).toLocaleDateString('de-DE')}
+                          </td>
+                          <td className="p-3">
+                            <div>
+                              <div className="font-medium">{transaction.user_name}</div>
+                              <div className="text-gray-500 text-xs">{transaction.user_email}</div>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              transaction.subscription_plan === 'premium' 
+                                ? 'bg-yellow-100 text-yellow-800' 
+                                : 'bg-purple-100 text-purple-800'
+                            }`}>
+                              {transaction.subscription_plan}
+                            </span>
+                          </td>
+                          <td className="p-3 font-medium">€{transaction.amount.toFixed(2)}</td>
+                          <td className="p-3">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              transaction.payment_status === 'completed' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-orange-100 text-orange-800'
+                            }`}>
+                              {transaction.payment_status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500">Keine Transaktionen vorhanden</p>
+                </div>
+              )}
+            </div>
+
+            {/* Payout History */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <Download className="w-5 h-5 mr-2 text-green-600" />
+                Auszahlungsverlauf
+              </h3>
+              
+              {adminData.payouts.length > 0 ? (
+                <div className="space-y-3">
+                  {adminData.payouts.map((payout, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">€{payout.amount.toFixed(2)}</div>
+                          <div className="text-sm text-gray-500">
+                            {new Date(payout.requested_at).toLocaleDateString('de-DE')} • {payout.description}
+                          </div>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          payout.status === 'completed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : payout.status === 'pending'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {payout.status === 'completed' ? 'Abgeschlossen' : 
+                           payout.status === 'pending' ? 'Ausstehend' : 'Fehlgeschlagen'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Download className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-500">Keine Auszahlungen vorhanden</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
