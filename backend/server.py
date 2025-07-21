@@ -295,17 +295,17 @@ async def generate_message_with_ai(prompt: str, tone: str = "freundlich", occasi
         Halte die Nachricht präzise aber herzlich. Verwende angemessene Emojis wenn passend.
         Antworte nur mit der Nachricht selbst, ohne zusätzliche Erklärungen."""
         
-        response = await openai_client.chat.completions.acreate(
-            model="gpt-3.5-turbo",
+        response = await openai_client.chat(
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
+                ChatMessage(role="system", content=system_prompt),
+                ChatMessage(role="user", content=prompt)
             ],
+            model="gpt-3.5-turbo",
             max_tokens=300,
             temperature=0.7
         )
         
-        return response.choices[0].message.content.strip()
+        return response.content.strip()
         
     except Exception as e:
         logger.error(f"AI generation error: {e}")
