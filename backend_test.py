@@ -57,6 +57,25 @@ class PremiumSubscriptionTester:
             'details': details
         })
         
+    def test_api_root(self):
+        """Test API root endpoint"""
+        try:
+            response = requests.get(f"{API_BASE}/")
+            if response.status_code == 200:
+                data = response.json()
+                if "message" in data and "Premium" in data["message"]:
+                    self.log_result("API Root", True, "Premium API is accessible")
+                    return True
+                else:
+                    self.log_result("API Root", False, "Unexpected response format")
+                    return False
+            else:
+                self.log_result("API Root", False, f"HTTP {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_result("API Root", False, f"Connection error: {str(e)}")
+            return False
+        
     def test_clean_database_state(self):
         """Test 1: Verify clean database state with no test data"""
         try:
