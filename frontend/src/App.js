@@ -667,6 +667,19 @@ const Dashboard = () => {
               <CreditCard className="w-4 h-4 inline mr-2" />
               Premium
             </button>
+            {user?.role === 'admin' && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                  activeTab === 'admin'
+                    ? 'bg-purple-500 text-white shadow-md'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Shield className="w-4 h-4 inline mr-2" />
+                Admin
+              </button>
+            )}
           </div>
         </div>
 
