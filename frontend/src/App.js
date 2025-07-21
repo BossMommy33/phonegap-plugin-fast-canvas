@@ -730,6 +730,7 @@ const Dashboard = () => {
     if (user?.role === 'admin') {
       fetchAdminStats();
       fetchAdminData();
+      fetchAdvancedAnalytics();
     }
     
     // Refresh messages every 10 seconds to show delivered messages
