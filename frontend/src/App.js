@@ -287,6 +287,18 @@ const Header = ({ activeTab, setActiveTab }) => {
                     <CreditCard className="w-4 h-4" />
                     <span>Abo-Verwaltung</span>
                   </button>
+                  {user.role === 'admin' && (
+                    <button
+                      onClick={() => {
+                        setActiveTab('admin');
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full flex items-center space-x-2 px-3 py-2 text-left text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Admin Panel</span>
+                    </button>
+                  )}
                   <button
                     onClick={logout}
                     className="w-full flex items-center space-x-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
