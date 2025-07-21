@@ -142,6 +142,35 @@ class ScheduledMessageCreate(BaseModel):
     is_recurring: bool = False
     recurring_pattern: Optional[str] = None
 
+# Enhanced Messaging Models
+class BulkMessageCreate(BaseModel):
+    messages: List[ScheduledMessageCreate]
+    time_interval: int = 5  # minutes between each message
+
+class MessageTemplate(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    name: str
+    title: str
+    content: str
+    category: str = "general"  # general, business, personal, marketing
+    is_public: bool = False  # If true, available to all users
+    usage_count: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class MessageTemplateCreate(BaseModel):
+    name: str
+    title: str
+    content: str
+    category: str = "general"
+    is_public: bool = False
+
+class BulkMessageResponse(BaseModel):
+    success_count: int
+    failed_count: int
+    created_messages: List[str]  # List of message IDs
+    errors: List[str]
+
 # AI Models
 class AIGenerateRequest(BaseModel):
     prompt: str
