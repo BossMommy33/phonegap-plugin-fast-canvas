@@ -249,12 +249,20 @@ def get_user_response(user: User) -> UserResponse:
         id=user.id,
         email=user.email,
         name=user.name,
+        role=user.role,
         subscription_plan=user.subscription_plan,
         subscription_status=user.subscription_status,
         monthly_messages_used=user.monthly_message_count,
         monthly_messages_limit=plan["monthly_messages"],
         features=plan["features"]
     )
+
+async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get current user and verify admin role"""
+    user = await get_current_user(credentials)
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
 
 async def check_message_limit(user: User) -> bool:
     """Check if user has reached their monthly message limit"""
