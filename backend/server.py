@@ -614,7 +614,7 @@ async def login(user: UserLogin):
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
-    return get_user_response(current_user)
+    return await get_user_response(current_user)
 
 # Subscription endpoints
 @api_router.get("/subscriptions/plans")
