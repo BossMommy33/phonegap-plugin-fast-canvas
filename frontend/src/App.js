@@ -1,19 +1,311 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { 
+  MessageSquare, 
+  Clock, 
+  CheckCircle, 
+  User, 
+  CreditCard, 
+  LogOut, 
+  Crown, 
+  Building2, 
+  Calendar,
+  Repeat,
+  Trash2,
+  Bell
+} from "lucide-react";
 import "./App.css";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-function App() {
+// Context for authentication
+const AuthContext = createContext();
+
+// Auth Provider Component
+const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchUser();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchUser = async () => {
+    try {
+      const response = await axios.get(`${API}/auth/me`);
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email, password) => {
+    const response = await axios.post(`${API}/auth/login`, { email, password });
+    const { access_token, user: userData } = response.data;
+    localStorage.setItem('token', access_token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+    setUser(userData);
+    return userData;
+  };
+
+  const register = async (email, password, name) => {
+    const response = await axios.post(`${API}/auth/register`, { email, password, name });
+    const { access_token, user: userData } = response.data;
+    localStorage.setItem('token', access_token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+    setUser(userData);
+    return userData;
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
+    setUser(null);
+  };
+
+  const value = {
+    user,
+    login,
+    register,
+    logout,
+    loading,
+    refreshUser: fetchUser
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+// Login/Register Component
+const AuthPage = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { login, register } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      if (isLogin) {
+        await login(formData.email, formData.password);
+      } else {
+        await register(formData.email, formData.password, formData.name);
+      }
+    } catch (error) {
+      setError(error.response?.data?.detail || 'Ein Fehler ist aufgetreten');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            ⏰ Zeitgesteuerte Nachrichten
+          </h1>
+          <p className="text-gray-600">
+            {isLogin ? 'Anmelden' : 'Registrieren'}
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Name
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ihr Name"
+                required
+              />
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              E-Mail
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="ihre@email.de"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Passwort
+            </label>
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Wird verarbeitet...' : (isLogin ? 'Anmelden' : 'Registrieren')}
+          </button>
+        </form>
+
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-blue-500 hover:text-blue-600"
+          >
+            {isLogin ? 'Noch kein Account? Registrieren' : 'Bereits registriert? Anmelden'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Header Component
+const Header = ({ activeTab, setActiveTab }) => {
+  const { user, logout } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const getPlanIcon = (plan) => {
+    switch(plan) {
+      case 'premium': return <Crown className="w-4 h-4 text-yellow-500" />;
+      case 'business': return <Building2 className="w-4 h-4 text-purple-500" />;
+      default: return <User className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getPlanColor = (plan) => {
+    switch(plan) {
+      case 'premium': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'business': return 'bg-purple-50 text-purple-700 border-purple-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  return (
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-gray-800">
+              ⏰ Zeitgesteuerte Nachrichten
+            </h1>
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getPlanColor(user.subscription_plan)}`}>
+              {getPlanIcon(user.subscription_plan)}
+              <span className="text-sm font-medium capitalize">{user.subscription_plan}</span>
+            </div>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <User className="w-5 h-5" />
+              <span className="hidden md:inline">{user.name}</span>
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div className="p-4 border-b border-gray-200">
+                  <p className="font-medium text-gray-900">{user.name}</p>
+                  <p className="text-sm text-gray-600">{user.email}</p>
+                  <div className="mt-2">
+                    <div className="text-xs text-gray-500">Nachrichten diesen Monat</div>
+                    <div className="text-sm font-medium">
+                      {user.monthly_messages_limit === -1 ? 
+                        `${user.monthly_messages_used} (Unbegrenzt)` :
+                        `${user.monthly_messages_used} / ${user.monthly_messages_limit}`
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div className="p-2">
+                  <button
+                    onClick={() => {
+                      setActiveTab('subscription');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    <span>Abo-Verwaltung</span>
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Abmelden</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+// Main Dashboard Component
+const Dashboard = () => {
   const [messages, setMessages] = useState([]);
   const [activeTab, setActiveTab] = useState('create');
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    scheduled_time: ''
+    scheduled_time: '',
+    is_recurring: false,
+    recurring_pattern: ''
   });
   const [loading, setLoading] = useState(false);
+  const [subscriptionPlans, setSubscriptionPlans] = useState({});
+  const { user, refreshUser } = useAuth();
 
   // Fetch messages
   const fetchMessages = async () => {
@@ -22,6 +314,16 @@ function App() {
       setMessages(response.data);
     } catch (error) {
       console.error('Error fetching messages:', error);
+    }
+  };
+
+  // Fetch subscription plans
+  const fetchSubscriptionPlans = async () => {
+    try {
+      const response = await axios.get(`${API}/subscriptions/plans`);
+      setSubscriptionPlans(response.data);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
     }
   };
 
@@ -37,12 +339,19 @@ function App() {
       };
       
       await axios.post(`${API}/messages`, messageData);
-      setFormData({ title: '', content: '', scheduled_time: '' });
+      setFormData({ 
+        title: '', 
+        content: '', 
+        scheduled_time: '',
+        is_recurring: false,
+        recurring_pattern: ''
+      });
       fetchMessages();
+      refreshUser(); // Refresh user data to update message count
       setActiveTab('scheduled');
     } catch (error) {
       console.error('Error creating message:', error);
-      alert('Fehler beim Erstellen der Nachricht!');
+      alert(error.response?.data?.detail || 'Fehler beim Erstellen der Nachricht!');
     } finally {
       setLoading(false);
     }
@@ -53,8 +362,20 @@ function App() {
     try {
       await axios.delete(`${API}/messages/${messageId}`);
       fetchMessages();
+      refreshUser(); // Refresh user data
     } catch (error) {
       console.error('Error deleting message:', error);
+    }
+  };
+
+  // Subscribe to plan
+  const subscribeToPlan = async (planName) => {
+    try {
+      const response = await axios.post(`${API}/subscriptions/subscribe`, { plan: planName });
+      window.location.href = response.data.checkout_url;
+    } catch (error) {
+      console.error('Error subscribing:', error);
+      alert(error.response?.data?.detail || 'Fehler beim Abonnieren!');
     }
   };
 
@@ -90,8 +411,13 @@ function App() {
     return diffMinutes <= 2 && diffMinutes > 0;
   };
 
+  const canUseRecurring = user?.subscription_plan !== 'free';
+  const isAtMessageLimit = user?.monthly_messages_limit !== -1 && 
+                          user?.monthly_messages_used >= user?.monthly_messages_limit;
+
   useEffect(() => {
     fetchMessages();
+    fetchSubscriptionPlans();
     // Refresh messages every 10 seconds to show delivered messages
     const interval = setInterval(fetchMessages, 10000);
     return () => clearInterval(interval);
@@ -102,219 +428,541 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">
-              ⏰ Zeitgesteuerte Nachrichten
-            </h1>
-            <p className="text-lg text-gray-600">
-              Erstelle Nachrichten und lass sie zur gewünschten Zeit ausliefern
-            </p>
-          </div>
+      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
 
-          {/* Tab Navigation */}
-          <div className="bg-white rounded-xl shadow-lg p-2 mb-6">
-            <div className="flex space-x-1">
-              <button
-                onClick={() => setActiveTab('create')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  activeTab === 'create'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                ✏️ Nachricht erstellen
-              </button>
-              <button
-                onClick={() => setActiveTab('scheduled')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  activeTab === 'scheduled'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                ⏳ Geplant ({scheduledMessages.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('delivered')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  activeTab === 'delivered'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                ✅ Ausgeliefert ({deliveredMessages.length})
-              </button>
-            </div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-xl shadow-lg p-2 mb-6">
+          <div className="flex space-x-1 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('create')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'create'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4 inline mr-2" />
+              Nachricht erstellen
+            </button>
+            <button
+              onClick={() => setActiveTab('scheduled')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'scheduled'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <Clock className="w-4 h-4 inline mr-2" />
+              Geplant ({scheduledMessages.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('delivered')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'delivered'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <CheckCircle className="w-4 h-4 inline mr-2" />
+              Ausgeliefert ({deliveredMessages.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('subscription')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'subscription'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <CreditCard className="w-4 h-4 inline mr-2" />
+              Premium
+            </button>
           </div>
+        </div>
 
-          {/* Create Message Tab */}
-          {activeTab === 'create' && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Neue Nachricht erstellen
-              </h2>
-              <form onSubmit={createMessage} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Titel
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Gib deiner Nachricht einen Titel..."
-                    required
-                  />
+        {/* Create Message Tab */}
+        {activeTab === 'create' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+              Neue Nachricht erstellen
+            </h2>
+
+            {isAtMessageLimit && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center space-x-2">
+                  <Bell className="w-5 h-5 text-yellow-600" />
+                  <div>
+                    <p className="font-medium text-yellow-800">Nachrichtenlimit erreicht</p>
+                    <p className="text-sm text-yellow-700">
+                      Sie haben Ihr monatliches Limit von {user.monthly_messages_limit} Nachrichten erreicht. 
+                      Upgraden Sie auf Premium für unbegrenzte Nachrichten.
+                    </p>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nachricht
+              </div>
+            )}
+
+            <form onSubmit={createMessage} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Titel
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Gib deiner Nachricht einen Titel..."
+                  required
+                  disabled={isAtMessageLimit}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nachricht
+                </label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({...formData, content: e.target.value})}
+                  rows="4"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Schreibe deine Nachricht hier..."
+                  required
+                  disabled={isAtMessageLimit}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Lieferzeitpunkt
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.scheduled_time}
+                  onChange={(e) => setFormData({...formData, scheduled_time: e.target.value})}
+                  min={getMinDateTime()}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                  disabled={isAtMessageLimit}
+                />
+              </div>
+
+              {/* Recurring Options (Premium Feature) */}
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Repeat className="w-5 h-5 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Wiederkehrende Nachricht</span>
+                    {!canUseRecurring && <Crown className="w-4 h-4 text-yellow-500" />}
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.is_recurring}
+                      onChange={(e) => setFormData({...formData, is_recurring: e.target.checked})}
+                      className="sr-only peer"
+                      disabled={!canUseRecurring || isAtMessageLimit}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
-                  <textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData({...formData, content: e.target.value})}
-                    rows="4"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Schreibe deine Nachricht hier..."
-                    required
-                  />
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Lieferzeitpunkt
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={formData.scheduled_time}
-                    onChange={(e) => setFormData({...formData, scheduled_time: e.target.value})}
-                    min={getMinDateTime()}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                
+
+                {!canUseRecurring && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-700">
+                      <Crown className="w-4 h-4 inline mr-1" />
+                      Wiederkehrende Nachrichten sind nur für Premium- und Business-Abonnenten verfügbar.
+                    </p>
+                  </div>
+                )}
+
+                {formData.is_recurring && canUseRecurring && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Wiederholungsintervall
+                    </label>
+                    <select
+                      value={formData.recurring_pattern}
+                      onChange={(e) => setFormData({...formData, recurring_pattern: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                      disabled={isAtMessageLimit}
+                    >
+                      <option value="">Intervall auswählen</option>
+                      <option value="daily">Täglich</option>
+                      <option value="weekly">Wöchentlich</option>
+                      <option value="monthly">Monatlich</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+              
+              <button
+                type="submit"
+                disabled={loading || isAtMessageLimit}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? '⏳ Wird erstellt...' : '📅 Nachricht planen'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Scheduled Messages Tab */}
+        {activeTab === 'scheduled' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+              Geplante Nachrichten ({scheduledMessages.length})
+            </h2>
+            {scheduledMessages.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">📭</div>
+                <p className="text-gray-500">Keine geplanten Nachrichten vorhanden.</p>
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+                  onClick={() => setActiveTab('create')}
+                  className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                 >
-                  {loading ? '⏳ Wird erstellt...' : '📅 Nachricht planen'}
+                  Erste Nachricht erstellen
                 </button>
-              </form>
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {scheduledMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`border rounded-lg p-4 transition-all ${
+                      isMessageDueSoon(message.scheduled_time)
+                        ? 'border-yellow-300 bg-yellow-50 shadow-md'
+                        : 'border-gray-200 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-800 flex items-center">
+                          {isMessageDueSoon(message.scheduled_time) && (
+                            <Bell className="w-4 h-4 mr-2 text-yellow-600" />
+                          )}
+                          {message.is_recurring && (
+                            <Repeat className="w-4 h-4 mr-2 text-green-600" />
+                          )}
+                          {message.title}
+                        </h3>
+                        <div className="text-sm text-gray-600 mt-1 space-y-1">
+                          <p className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {formatDate(message.scheduled_time)}
+                          </p>
+                          {message.is_recurring && (
+                            <p className="flex items-center text-green-600">
+                              <Repeat className="w-4 h-4 mr-1" />
+                              Wiederholung: {message.recurring_pattern === 'daily' ? 'Täglich' : 
+                                           message.recurring_pattern === 'weekly' ? 'Wöchentlich' : 'Monatlich'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => deleteMessage(message.id)}
+                        className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded"
+                        title="Nachricht löschen"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+                      {message.content}
+                    </p>
+                    {isMessageDueSoon(message.scheduled_time) && (
+                      <div className="mt-3 text-sm text-yellow-700 bg-yellow-100 p-2 rounded-md">
+                        ⚡ Diese Nachricht wird bald ausgeliefert!
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-          {/* Scheduled Messages Tab */}
-          {activeTab === 'scheduled' && (
+        {/* Delivered Messages Tab */}
+        {activeTab === 'delivered' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+              Ausgelieferte Nachrichten ({deliveredMessages.length})
+            </h2>
+            {deliveredMessages.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-6xl mb-4">📬</div>
+                <p className="text-gray-500">Noch keine Nachrichten ausgeliefert.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {deliveredMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className="border border-green-200 bg-green-50 rounded-lg p-4"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-800 flex items-center">
+                          <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                          {message.is_recurring && (
+                            <Repeat className="w-4 h-4 mr-2 text-green-600" />
+                          )}
+                          {message.title}
+                        </h3>
+                        <div className="text-sm text-gray-600 mt-1 space-y-1">
+                          <p className="flex items-center">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            Geplant: {formatDate(message.scheduled_time)}
+                          </p>
+                          <p className="flex items-center text-green-600">
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Ausgeliefert: {formatDate(message.delivered_at)}
+                          </p>
+                          {message.is_recurring && (
+                            <p className="flex items-center text-green-600">
+                              <Repeat className="w-4 h-4 mr-1" />
+                              Wiederholung: {message.recurring_pattern === 'daily' ? 'Täglich' : 
+                                           message.recurring_pattern === 'weekly' ? 'Wöchentlich' : 'Monatlich'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-gray-700 bg-white p-3 rounded-md border-l-4 border-green-400">
+                      {message.content}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Subscription Tab */}
+        {activeTab === 'subscription' && (
+          <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Geplante Nachrichten ({scheduledMessages.length})
+                Ihr aktuelles Abo
               </h2>
-              {scheduledMessages.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-4">📭</div>
-                  <p className="text-gray-500">Keine geplanten Nachrichten vorhanden.</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-blue-800 capitalize flex items-center">
+                      {user.subscription_plan === 'premium' && <Crown className="w-5 h-5 mr-2 text-yellow-500" />}
+                      {user.subscription_plan === 'business' && <Building2 className="w-5 h-5 mr-2 text-purple-500" />}
+                      {subscriptionPlans[user.subscription_plan]?.name || user.subscription_plan}
+                    </h3>
+                    <p className="text-sm text-blue-600 mt-1">
+                      Nachrichten diesen Monat: {user.monthly_messages_used} 
+                      {user.monthly_messages_limit === -1 ? ' (Unbegrenzt)' : ` / ${user.monthly_messages_limit}`}
+                    </p>
+                    <div className="mt-2">
+                      <p className="text-sm text-blue-700">Ihre Features:</p>
+                      <ul className="text-sm text-blue-600 mt-1 space-y-1">
+                        {user.features?.map((feature, index) => (
+                          <li key={index} className="flex items-center">
+                            <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-blue-800">
+                      {subscriptionPlans[user.subscription_plan]?.price === 0 ? 'Kostenlos' : 
+                       `€${subscriptionPlans[user.subscription_plan]?.price}/Monat`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Premium Plan */}
+              {user.subscription_plan !== 'premium' && (
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className="text-center mb-6">
+                    <Crown className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+                    <h3 className="text-2xl font-bold text-gray-800">Premium</h3>
+                    <p className="text-3xl font-bold text-yellow-600 mt-2">€9.99<span className="text-sm font-normal text-gray-500">/Monat</span></p>
+                  </div>
+                  <ul className="space-y-3 mb-6">
+                    {subscriptionPlans.premium?.features?.map((feature, index) => (
+                      <li key={index} className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
                   <button
-                    onClick={() => setActiveTab('create')}
-                    className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                    onClick={() => subscribeToPlan('premium')}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-colors"
                   >
-                    Erste Nachricht erstellen
+                    Auf Premium upgraden
                   </button>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {scheduledMessages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`border rounded-lg p-4 transition-all ${
-                        isMessageDueSoon(message.scheduled_time)
-                          ? 'border-yellow-300 bg-yellow-50 shadow-md'
-                          : 'border-gray-200 hover:shadow-md'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800 flex items-center">
-                            {isMessageDueSoon(message.scheduled_time) && (
-                              <span className="mr-2">🔔</span>
-                            )}
-                            {message.title}
-                          </h3>
-                          <p className="text-sm text-gray-600 mt-1">
-                            📅 {formatDate(message.scheduled_time)}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => deleteMessage(message.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                          title="Nachricht löschen"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                      <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
-                        {message.content}
-                      </p>
-                      {isMessageDueSoon(message.scheduled_time) && (
-                        <div className="mt-3 text-sm text-yellow-700 bg-yellow-100 p-2 rounded-md">
-                          ⚡ Diese Nachricht wird bald ausgeliefert!
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
               )}
-            </div>
-          )}
 
-          {/* Delivered Messages Tab */}
-          {activeTab === 'delivered' && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                Ausgelieferte Nachrichten ({deliveredMessages.length})
-              </h2>
-              {deliveredMessages.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-4">📬</div>
-                  <p className="text-gray-500">Noch keine Nachrichten ausgeliefert.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {deliveredMessages.map((message) => (
-                    <div
-                      key={message.id}
-                      className="border border-green-200 bg-green-50 rounded-lg p-4"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-800 flex items-center">
-                            ✅ {message.title}
-                          </h3>
-                          <div className="text-sm text-gray-600 mt-1 space-y-1">
-                            <p>📅 Geplant: {formatDate(message.scheduled_time)}</p>
-                            <p>🚀 Ausgeliefert: {formatDate(message.delivered_at)}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 bg-white p-3 rounded-md border-l-4 border-green-400">
-                        {message.content}
-                      </p>
-                    </div>
-                  ))}
+              {/* Business Plan */}
+              {user.subscription_plan !== 'business' && (
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className="text-center mb-6">
+                    <Building2 className="w-12 h-12 text-purple-500 mx-auto mb-3" />
+                    <h3 className="text-2xl font-bold text-gray-800">Business</h3>
+                    <p className="text-3xl font-bold text-purple-600 mt-2">€29.99<span className="text-sm font-normal text-gray-500">/Monat</span></p>
+                  </div>
+                  <ul className="space-y-3 mb-6">
+                    {subscriptionPlans.business?.features?.map((feature, index) => (
+                      <li key={index} className="flex items-center text-gray-700">
+                        <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => subscribeToPlan('business')}
+                    className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                  >
+                    Auf Business upgraden
+                  </button>
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
+};
+
+// Subscription Success Page
+const SubscriptionSuccess = () => {
+  const { refreshUser } = useAuth();
+  const [status, setStatus] = useState('checking');
+  
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      
+      if (sessionId) {
+        try {
+          const response = await axios.get(`${API}/subscriptions/status/${sessionId}`);
+          if (response.data.payment_status === 'paid') {
+            setStatus('success');
+            await refreshUser(); // Refresh user data
+          } else {
+            setStatus('pending');
+            // Poll for status updates
+            setTimeout(checkPaymentStatus, 3000);
+          }
+        } catch (error) {
+          console.error('Error checking payment status:', error);
+          setStatus('error');
+        }
+      } else {
+        setStatus('error');
+      }
+    };
+
+    checkPaymentStatus();
+  }, [refreshUser]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+        {status === 'checking' && (
+          <>
+            <div className="text-6xl mb-4">⏳</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Zahlung wird überprüft...</h2>
+            <p className="text-gray-600">Bitte warten Sie einen Moment.</p>
+          </>
+        )}
+        
+        {status === 'success' && (
+          <>
+            <div className="text-6xl mb-4">🎉</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Willkommen im Premium-Club!</h2>
+            <p className="text-gray-600 mb-6">Ihre Zahlung war erfolgreich. Sie haben jetzt Zugang zu allen Premium-Features!</p>
+            <a
+              href="/"
+              className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+            >
+              Zur App
+            </a>
+          </>
+        )}
+        
+        {status === 'pending' && (
+          <>
+            <div className="text-6xl mb-4">⏳</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Zahlung wird verarbeitet...</h2>
+            <p className="text-gray-600">Dies kann einige Sekunden dauern.</p>
+          </>
+        )}
+        
+        {status === 'error' && (
+          <>
+            <div className="text-6xl mb-4">❌</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Fehler bei der Zahlung</h2>
+            <p className="text-gray-600 mb-6">Es gab ein Problem bei der Verarbeitung Ihrer Zahlung.</p>
+            <a
+              href="/"
+              className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+            >
+              Zurück zur App
+            </a>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Main App Component
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AuthWrapper />
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
+
+// Auth Wrapper to handle routing based on auth state
+const AuthWrapper = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⏰</div>
+          <p className="text-gray-600">Laden...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/subscription-success"
+        element={user ? <SubscriptionSuccess /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/"
+        element={user ? <Dashboard /> : <AuthPage />}
+      />
+    </Routes>
+  );
+};
 
 export default App;
