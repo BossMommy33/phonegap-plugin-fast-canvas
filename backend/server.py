@@ -1010,7 +1010,7 @@ async def update_user_role(user_id: str, role_data: dict, current_admin: User = 
     except Exception as e:
         logger.error(f"Error updating user role: {e}")
         raise HTTPException(status_code=500, detail="Fehler beim Aktualisieren der Benutzerrolle")
-@api_router.get("/analytics")
+# Analytics (Business only)
 async def get_analytics(current_user: User = Depends(get_current_user)):
     if current_user.subscription_plan != "business":
         raise HTTPException(status_code=403, detail="Analytics are only available for Business subscribers")
