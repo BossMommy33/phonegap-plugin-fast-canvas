@@ -1003,11 +1003,11 @@ async def get_payout_history(current_admin: User = Depends(get_current_admin)):
 @api_router.put("/admin/users/{user_id}/role")
 async def update_user_role(user_id: str, role_data: dict, current_admin: User = Depends(get_current_admin)):
     """Update user role (admin only)"""
+    new_role = role_data.get("role")
+    if new_role not in ["user", "admin"]:
+        raise HTTPException(status_code=400, detail="Ungültige Rolle")
+    
     try:
-        new_role = role_data.get("role")
-        if new_role not in ["user", "admin"]:
-            raise HTTPException(status_code=400, detail="Ungültige Rolle")
-        
         result = await db.users.update_one(
             {"id": user_id},
             {"$set": {"role": new_role}}
@@ -1018,6 +1018,9 @@ async def update_user_role(user_id: str, role_data: dict, current_admin: User = 
         
         return {"message": f"Benutzerrolle auf {new_role} geändert"}
         
+    except HTTPException:
+        # Re-raise HTTPExceptions (like 404)
+        raise
     except Exception as e:
         logger.error(f"Error updating user role: {e}")
         raise HTTPException(status_code=500, detail="Fehler beim Aktualisieren der Benutzerrolle")
