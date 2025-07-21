@@ -180,6 +180,32 @@ class PaymentTransaction(BaseModel):
 class SubscribeRequest(BaseModel):
     plan: str  # premium, business
 
+# Admin Models
+class AdminStats(BaseModel):
+    total_users: int
+    premium_users: int
+    business_users: int
+    total_revenue: float
+    monthly_revenue: float
+    messages_sent_today: int
+    messages_sent_month: int
+    available_balance: float
+    pending_payouts: float
+
+class PayoutRequest(BaseModel):
+    amount: float
+    description: str = "Admin payout request"
+
+class PayoutRecord(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    admin_user_id: str
+    amount: float
+    description: str
+    status: str = "pending"  # pending, completed, failed
+    stripe_payout_id: Optional[str] = None
+    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: Optional[datetime] = None
+
 # Utility Functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
