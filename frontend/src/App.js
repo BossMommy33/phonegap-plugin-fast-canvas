@@ -471,6 +471,48 @@ const Dashboard = () => {
     }
   };
 
+  // Fetch advanced analytics data
+  const fetchAdvancedAnalytics = async () => {
+    if (user?.role !== 'admin') return;
+    
+    setAnalyticsLoading(true);
+    try {
+      const response = await axios.get(`${API}/admin/analytics/complete`);
+      setAdvancedAnalytics(response.data);
+    } catch (error) {
+      console.error('Error fetching advanced analytics:', error);
+      setAdvancedAnalytics(null);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Export analytics data
+  const exportAnalytics = async (format) => {
+    if (user?.role !== 'admin') return;
+    
+    try {
+      const response = await axios.get(`${API}/admin/analytics/export?format=${format}`);
+      
+      if (format === 'json') {
+        const dataStr = JSON.stringify(response.data, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `analytics-export-${new Date().toISOString().split('T')[0]}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+      } else {
+        // CSV export would be handled by the backend in a real implementation
+        alert('CSV Export vorbereitet. In einer echten Implementierung würde eine CSV-Datei heruntergeladen.');
+      }
+    } catch (error) {
+      console.error('Error exporting analytics:', error);
+      alert('Fehler beim Exportieren der Daten');
+    }
+  };
+
   // Copy referral link
   const copyReferralLink = async () => {
     if (referralData?.referral_link) {
