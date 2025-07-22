@@ -788,6 +788,78 @@ const Dashboard = () => {
     }
   };
 
+  // Contact & Email Delivery Management Functions
+  const fetchContactManagementData = async () => {
+    if (user?.role !== 'admin') return;
+    
+    setContactManagementLoading(true);
+    try {
+      // Fetch all contact management data in parallel
+      const [contactsRes, emailDeliveriesRes, allContactsRes, recentDeliveriesRes] = await Promise.all([
+        axios.get(`${API}/admin/contacts/overview`),
+        axios.get(`${API}/admin/email-deliveries/overview`),
+        axios.get(`${API}/admin/contacts/all?limit=20`),
+        axios.get(`${API}/admin/email-deliveries/recent?limit=20`)
+      ]);
+      
+      setContactsOverview(contactsRes.data);
+      setEmailDeliveriesOverview(emailDeliveriesRes.data);
+      setAllContacts(allContactsRes.data.contacts || []);
+      setRecentDeliveries(recentDeliveriesRes.data.deliveries || []);
+      
+    } catch (error) {
+      console.error('Error fetching contact management data:', error);
+    } finally {
+      setContactManagementLoading(false);
+    }
+  };
+
+  const searchContacts = async (searchTerm, contactType) => {
+    if (user?.role !== 'admin') return;
+    
+    try {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (contactType) params.append('contact_type', contactType);
+      params.append('limit', '50');
+      
+      const response = await axios.get(`${API}/admin/contacts/all?${params}`);
+      setAllContacts(response.data.contacts || []);
+    } catch (error) {
+      console.error('Error searching contacts:', error);
+    }
+  };
+
+  const filterDeliveries = async (status) => {
+    if (user?.role !== 'admin') return;
+    
+    try {
+      const params = new URLSearchParams();
+      if (status) params.append('status', status);
+      params.append('limit', '50');
+      
+      const response = await axios.get(`${API}/admin/email-deliveries/recent?${params}`);
+      setRecentDeliveries(response.data.deliveries || []);
+    } catch (error) {
+      console.error('Error filtering deliveries:', error);
+    }
+  };
+
+  const mergeContacts = async (sourceContactId, targetContactId) => {
+    if (user?.role !== 'admin') return;
+    
+    try {
+      await axios.post(`${API}/admin/contacts/${sourceContactId}/merge`, {
+        target_contact_id: targetContactId
+      });
+      fetchContactManagementData(); // Refresh data
+      alert('Kontakte erfolgreich zusammengeführt!');
+    } catch (error) {
+      console.error('Error merging contacts:', error);
+      alert('Fehler beim Zusammenführen der Kontakte');
+    }
+  };
+
   // Copy referral link
   const copyReferralLink = async () => {
     if (referralData?.referral_link) {
