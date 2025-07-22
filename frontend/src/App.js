@@ -479,6 +479,15 @@ const Dashboard = () => {
   const [calendarData, setCalendarData] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
 
+  // Marketing Automation State  
+  const [marketingCampaigns, setMarketingCampaigns] = useState([]);
+  const [marketingTemplates, setMarketingTemplates] = useState({ predefined_templates: [], custom_templates: [] });
+  const [socialPosts, setSocialPosts] = useState({ ready_to_use_posts: [], custom_posts: [] });
+  const [launchMetrics, setLaunchMetrics] = useState(null);
+  const [launchChecklist, setLaunchChecklist] = useState([]);
+  const [marketingLoading, setMarketingLoading] = useState(false);
+  const [selectedMarketingTab, setSelectedMarketingTab] = useState('overview');
+
   // Fetch messages
   const fetchMessages = async () => {
     try {
