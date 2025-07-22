@@ -1867,6 +1867,281 @@ async def load_launch_checklist_with_status():
     
     return checklist
 
+# Admin Contact & Email Delivery Management
+@api_router.get("/admin/contacts/overview")
+async def get_admin_contacts_overview(current_admin: User = Depends(get_current_admin)):
+    """Get complete overview of all contacts and email deliveries (Admin only)"""
+    try:
+        # Get total contacts across all users
+        total_contacts = await db.contacts.count_documents({})
+        
+        # Get contacts by type
+        contact_types = await db.contacts.aggregate([
+            {"$group": {"_id": "$contact_type", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
+        ]).to_list(None)
+        
+        # Get top users by contact count
+        top_users_by_contacts = await db.contacts.aggregate([
+            {"$group": {"_id": "$user_id", "contact_count": {"$sum": 1}}},
+            {"$sort": {"contact_count": -1}},
+            {"$limit": 10}
+        ]).to_list(None)
+        
+        # Populate user names
+        for user_stat in top_users_by_contacts:
+            user_info = await db.users.find_one({"id": user_stat["_id"]}, {"name": 1, "email": 1})
+            if user_info:
+                user_stat["user_name"] = user_info.get("name", "Unknown")
+                user_stat["user_email"] = user_info.get("email", "Unknown")
+        
+        # Get contact lists statistics
+        total_contact_lists = await db.contact_lists.count_documents({})
+        contact_list_types = await db.contact_lists.aggregate([
+            {"$group": {"_id": "$list_type", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
+        ]).to_list(None)
+        
+        return {
+            "contacts_overview": {
+                "total_contacts": total_contacts,
+                "contact_types": contact_types,
+                "top_users_by_contacts": top_users_by_contacts
+            },
+            "contact_lists_overview": {
+                "total_contact_lists": total_contact_lists,
+                "list_types": contact_list_types
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting admin contacts overview: {e}")
+        raise HTTPException(status_code=500, detail="Error loading contacts overview")
+
+@api_router.get("/admin/email-deliveries/overview")
+async def get_admin_email_deliveries_overview(current_admin: User = Depends(get_current_admin)):
+    """Get complete overview of email deliveries (Admin only)"""
+    try:
+        # Total email deliveries
+        total_deliveries = await db.email_deliveries.count_documents({})
+        
+        # Delivery status breakdown
+        delivery_statuses = await db.email_deliveries.aggregate([
+            {"$group": {"_id": "$delivery_status", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}}
+        ]).to_list(None)
+        
+        # Recent deliveries (last 7 days)
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        recent_deliveries = await db.email_deliveries.count_documents({
+            "sent_at": {"$gte": seven_days_ago}
+        })
+        
+        # Failed deliveries in last 24 hours
+        twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+        recent_failed = await db.email_deliveries.count_documents({
+            "delivery_status": "failed",
+            "sent_at": {"$gte": twenty_four_hours_ago}
+        })
+        
+        # Top senders by email volume
+        top_senders = await db.email_deliveries.aggregate([
+            {"$group": {"_id": "$user_id", "email_count": {"$sum": 1}}},
+            {"$sort": {"email_count": -1}},
+            {"$limit": 10}
+        ]).to_list(None)
+        
+        # Populate sender names
+        for sender in top_senders:
+            user_info = await db.users.find_one({"id": sender["_id"]}, {"name": 1, "email": 1})
+            if user_info:
+                sender["user_name"] = user_info.get("name", "Unknown")
+                sender["user_email"] = user_info.get("email", "Unknown")
+        
+        # Email delivery success rate
+        success_count = await db.email_deliveries.count_documents({
+            "delivery_status": {"$in": ["sent", "delivered", "opened"]}
+        })
+        success_rate = (success_count / total_deliveries * 100) if total_deliveries > 0 else 0
+        
+        # Recent error messages
+        recent_errors = await db.email_deliveries.find({
+            "delivery_status": "failed",
+            "error_message": {"$ne": None, "$exists": True}
+        }, {"error_message": 1, "recipient_email": 1, "sent_at": 1, "_id": 0}).sort("sent_at", -1).limit(10).to_list(None)
+        
+        return {
+            "delivery_overview": {
+                "total_deliveries": total_deliveries,
+                "recent_deliveries_7d": recent_deliveries,
+                "recent_failed_24h": recent_failed,
+                "success_rate": round(success_rate, 2)
+            },
+            "delivery_statuses": delivery_statuses,
+            "top_senders": top_senders,
+            "recent_errors": recent_errors
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting email deliveries overview: {e}")
+        raise HTTPException(status_code=500, detail="Error loading email deliveries overview")
+
+@api_router.get("/admin/contacts/all")
+async def get_all_contacts_admin(
+    page: int = 1, 
+    limit: int = 50, 
+    search: str = None,
+    contact_type: str = None,
+    current_admin: User = Depends(get_current_admin)
+):
+    """Get all contacts across all users (Admin only)"""
+    try:
+        skip = (page - 1) * limit
+        query = {}
+        
+        # Add search filter
+        if search:
+            query["$or"] = [
+                {"name": {"$regex": search, "$options": "i"}},
+                {"email": {"$regex": search, "$options": "i"}},
+                {"company": {"$regex": search, "$options": "i"}}
+            ]
+        
+        # Add contact type filter
+        if contact_type:
+            query["contact_type"] = contact_type
+        
+        # Get contacts with user information
+        contacts = await db.contacts.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+        
+        # Add user information to each contact
+        for contact in contacts:
+            user_info = await db.users.find_one({"id": contact["user_id"]}, {"name": 1, "email": 1})
+            if user_info:
+                contact["owner_name"] = user_info.get("name", "Unknown")
+                contact["owner_email"] = user_info.get("email", "Unknown")
+        
+        # Get total count for pagination
+        total_count = await db.contacts.count_documents(query)
+        
+        return {
+            "contacts": contacts,
+            "total_count": total_count,
+            "page": page,
+            "limit": limit,
+            "total_pages": (total_count + limit - 1) // limit
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting all contacts: {e}")
+        raise HTTPException(status_code=500, detail="Error loading all contacts")
+
+@api_router.get("/admin/email-deliveries/recent")
+async def get_recent_email_deliveries_admin(
+    page: int = 1,
+    limit: int = 50,
+    status: str = None,
+    current_admin: User = Depends(get_current_admin)
+):
+    """Get recent email deliveries (Admin only)"""
+    try:
+        skip = (page - 1) * limit
+        query = {}
+        
+        # Add status filter
+        if status:
+            query["delivery_status"] = status
+        
+        # Get recent deliveries
+        deliveries = await db.email_deliveries.find(query, {"_id": 0}).sort("sent_at", -1).skip(skip).limit(limit).to_list(limit)
+        
+        # Add user and message information
+        for delivery in deliveries:
+            # Get user info
+            user_info = await db.users.find_one({"id": delivery["user_id"]}, {"name": 1, "email": 1})
+            if user_info:
+                delivery["sender_name"] = user_info.get("name", "Unknown")
+                delivery["sender_email"] = user_info.get("email", "Unknown")
+            
+            # Get message info
+            message_info = await db.scheduled_messages.find_one({"id": delivery["message_id"]}, {"title": 1, "scheduled_time": 1})
+            if message_info:
+                delivery["message_title"] = message_info.get("title", "Unknown")
+                delivery["message_scheduled_time"] = message_info.get("scheduled_time")
+        
+        # Get total count
+        total_count = await db.email_deliveries.count_documents(query)
+        
+        return {
+            "deliveries": deliveries,
+            "total_count": total_count,
+            "page": page,
+            "limit": limit,
+            "total_pages": (total_count + limit - 1) // limit
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting recent email deliveries: {e}")
+        raise HTTPException(status_code=500, detail="Error loading recent email deliveries")
+
+@api_router.post("/admin/contacts/{contact_id}/merge")
+async def merge_duplicate_contacts_admin(
+    contact_id: str,
+    target_contact_id: str,
+    current_admin: User = Depends(get_current_admin)
+):
+    """Merge duplicate contacts (Admin only)"""
+    try:
+        # Get both contacts
+        source_contact = await db.contacts.find_one({"id": contact_id})
+        target_contact = await db.contacts.find_one({"id": target_contact_id})
+        
+        if not source_contact or not target_contact:
+            raise HTTPException(status_code=404, detail="One or both contacts not found")
+        
+        # Merge tags and notes
+        merged_tags = list(set((target_contact.get("tags", []) + source_contact.get("tags", []))))
+        merged_notes = f"{target_contact.get('notes', '')}\n\n[MERGED FROM {source_contact['name']}]: {source_contact.get('notes', '')}" if source_contact.get('notes') else target_contact.get('notes', '')
+        
+        # Update target contact with merged data
+        await db.contacts.update_one(
+            {"id": target_contact_id},
+            {"$set": {
+                "tags": merged_tags,
+                "notes": merged_notes.strip(),
+                "last_contacted": max(
+                    source_contact.get("last_contacted", datetime.min),
+                    target_contact.get("last_contacted", datetime.min)
+                )
+            }}
+        )
+        
+        # Update contact lists to replace source contact with target contact
+        await db.contact_lists.update_many(
+            {"contacts": contact_id},
+            {"$set": {"contacts.$": target_contact_id}}
+        )
+        
+        # Remove duplicate entries
+        await db.contact_lists.update_many(
+            {"contacts": {"$all": [contact_id, target_contact_id]}},
+            {"$pull": {"contacts": contact_id}}
+        )
+        
+        # Update any email deliveries (future enhancement)
+        # This would update any scheduled messages that reference the old contact
+        
+        # Delete the source contact
+        await db.contacts.delete_one({"id": contact_id})
+        
+        return {"message": f"Contact {source_contact['name']} merged into {target_contact['name']} successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error merging contacts: {e}")
+        raise HTTPException(status_code=500, detail="Error merging contacts")
+
 # Admin endpoints
 @api_router.get("/admin/stats", response_model=AdminStats)
 async def get_admin_stats(current_admin: User = Depends(get_current_admin)):
