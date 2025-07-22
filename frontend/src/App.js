@@ -997,6 +997,7 @@ const Dashboard = () => {
       fetchAdminStats();
       fetchAdminData();
       fetchAdvancedAnalytics();
+      fetchMarketingData();
     }
     
     // Refresh messages every 10 seconds to show delivered messages
