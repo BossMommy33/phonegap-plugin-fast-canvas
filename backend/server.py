@@ -1306,6 +1306,197 @@ async def get_calendar_messages(year: int, month: int, current_user: User = Depe
         logger.error(f"Error getting calendar data: {e}")
         raise HTTPException(status_code=500, detail="Error loading calendar data")
 
+# Contact Management Endpoints
+@api_router.get("/contacts")
+async def get_contacts(current_user: User = Depends(get_current_user)):
+    """Get user's contacts"""
+    try:
+        contacts = await db.contacts.find({"user_id": current_user.id}, {"_id": 0}).sort("name", 1).to_list(1000)
+        return {"contacts": contacts}
+    except Exception as e:
+        logger.error(f"Error getting contacts: {e}")
+        raise HTTPException(status_code=500, detail="Error loading contacts")
+
+@api_router.post("/contacts", response_model=Contact)
+async def create_contact(contact: ContactCreate, current_user: User = Depends(get_current_user)):
+    """Create a new contact"""
+    try:
+        # Check if contact with this email already exists for this user
+        existing_contact = await db.contacts.find_one({
+            "user_id": current_user.id,
+            "email": contact.email
+        })
+        
+        if existing_contact:
+            raise HTTPException(status_code=400, detail="Contact with this email already exists")
+        
+        contact_obj = Contact(
+            user_id=current_user.id,
+            **contact.dict()
+        )
+        
+        await db.contacts.insert_one(contact_obj.dict())
+        return contact_obj
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating contact: {e}")
+        raise HTTPException(status_code=500, detail="Error creating contact")
+
+@api_router.put("/contacts/{contact_id}")
+async def update_contact(contact_id: str, contact_update: ContactCreate, current_user: User = Depends(get_current_user)):
+    """Update a contact"""
+    try:
+        result = await db.contacts.update_one(
+            {"id": contact_id, "user_id": current_user.id},
+            {"$set": contact_update.dict()}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        
+        return {"message": "Contact updated successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating contact: {e}")
+        raise HTTPException(status_code=500, detail="Error updating contact")
+
+@api_router.delete("/contacts/{contact_id}")
+async def delete_contact(contact_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a contact"""
+    try:
+        result = await db.contacts.delete_one({"id": contact_id, "user_id": current_user.id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Contact not found")
+        
+        return {"message": "Contact deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting contact: {e}")
+        raise HTTPException(status_code=500, detail="Error deleting contact")
+
+@api_router.get("/contact-lists")
+async def get_contact_lists(current_user: User = Depends(get_current_user)):
+    """Get user's contact lists"""
+    try:
+        # Get contact lists with contact count
+        lists = await db.contact_lists.find({"user_id": current_user.id}, {"_id": 0}).sort("name", 1).to_list(1000)
+        
+        # Add contact count to each list
+        for contact_list in lists:
+            contact_list["contact_count"] = len(contact_list.get("contacts", []))
+        
+        return {"contact_lists": lists}
+    except Exception as e:
+        logger.error(f"Error getting contact lists: {e}")
+        raise HTTPException(status_code=500, detail="Error loading contact lists")
+
+@api_router.post("/contact-lists", response_model=ContactList)
+async def create_contact_list(contact_list: ContactListCreate, current_user: User = Depends(get_current_user)):
+    """Create a new contact list"""
+    try:
+        contact_list_obj = ContactList(
+            user_id=current_user.id,
+            **contact_list.dict()
+        )
+        
+        await db.contact_lists.insert_one(contact_list_obj.dict())
+        return contact_list_obj
+        
+    except Exception as e:
+        logger.error(f"Error creating contact list: {e}")
+        raise HTTPException(status_code=500, detail="Error creating contact list")
+
+@api_router.put("/contact-lists/{list_id}/contacts")
+async def update_contact_list_contacts(
+    list_id: str, 
+    contact_ids: List[str], 
+    current_user: User = Depends(get_current_user)
+):
+    """Add/remove contacts from a contact list"""
+    try:
+        # Verify all contact IDs belong to the user
+        user_contacts = await db.contacts.find(
+            {"user_id": current_user.id, "id": {"$in": contact_ids}}, 
+            {"id": 1}
+        ).to_list(1000)
+        
+        valid_contact_ids = [c["id"] for c in user_contacts]
+        
+        result = await db.contact_lists.update_one(
+            {"id": list_id, "user_id": current_user.id},
+            {"$set": {"contacts": valid_contact_ids}}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Contact list not found")
+        
+        return {"message": f"Contact list updated with {len(valid_contact_ids)} contacts"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating contact list: {e}")
+        raise HTTPException(status_code=500, detail="Error updating contact list")
+
+@api_router.delete("/contact-lists/{list_id}")
+async def delete_contact_list(list_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a contact list"""
+    try:
+        result = await db.contact_lists.delete_one({"id": list_id, "user_id": current_user.id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Contact list not found")
+        
+        return {"message": "Contact list deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting contact list: {e}")
+        raise HTTPException(status_code=500, detail="Error deleting contact list")
+
+# Initialize default contact lists for new users
+async def initialize_default_contact_lists(user_id: str):
+    """Create default contact lists for new users"""
+    try:
+        default_lists = [
+            {
+                "name": "Freunde & Familie",
+                "description": "Persönliche Kontakte für private Nachrichten",
+                "list_type": "personal",
+                "is_default": True
+            },
+            {
+                "name": "Geschäftskontakte",
+                "description": "Berufliche Kontakte und Unternehmen",
+                "list_type": "business",
+                "is_default": True
+            },
+            {
+                "name": "VIP-Kontakte",
+                "description": "Wichtige Kontakte mit hoher Priorität",
+                "list_type": "custom",
+                "is_default": False
+            }
+        ]
+        
+        for list_data in default_lists:
+            contact_list = ContactList(
+                user_id=user_id,
+                **list_data
+            )
+            await db.contact_lists.insert_one(contact_list.dict())
+            
+    except Exception as e:
+        logger.error(f"Error initializing default contact lists: {e}")
+
 # Marketing Automation Endpoints (Admin only)
 @api_router.get("/admin/marketing/campaigns")
 async def get_marketing_campaigns(current_admin: User = Depends(get_current_admin)):
