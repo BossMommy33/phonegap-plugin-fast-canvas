@@ -199,6 +199,55 @@ class ScheduledMessageResponse(BaseModel):
     is_recurring: bool = False
     recurring_pattern: Optional[str] = None
 
+# Marketing Automation Models
+class MarketingCampaign(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    type: str  # email, social_media, push_notification
+    target_audience: str  # all_users, free_users, premium_users, new_users
+    content: dict
+    schedule_type: str = "immediate"  # immediate, scheduled, triggered
+    scheduled_time: Optional[datetime] = None
+    trigger_event: Optional[str] = None  # registration, first_message, subscription_upgrade
+    status: str = "draft"  # draft, active, completed, cancelled
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    sent_count: int = 0
+    open_rate: float = 0.0
+    click_rate: float = 0.0
+
+class MarketingTemplate(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    type: str  # email, social_post, push_notification
+    subject: Optional[str] = None
+    content: str
+    variables: List[str] = []  # List of template variables like {{first_name}}
+    category: str = "general"
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    usage_count: int = 0
+
+class SocialMediaPost(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    platform: str  # twitter, linkedin, facebook, instagram
+    content: str
+    media_urls: List[str] = []
+    hashtags: List[str] = []
+    scheduled_time: Optional[datetime] = None
+    status: str = "draft"  # draft, scheduled, published
+    engagement_stats: dict = {}
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class LaunchMetrics(BaseModel):
+    date: datetime = Field(default_factory=datetime.utcnow)
+    new_registrations: int = 0
+    premium_conversions: int = 0
+    social_engagement: int = 0
+    referral_signups: int = 0
+    daily_active_users: int = 0
+    email_opens: int = 0
+    campaign_clicks: int = 0
+
 # Payment Models
 class PaymentTransaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
