@@ -1960,7 +1960,8 @@ const Dashboard = () => {
                         { id: 'users', label: 'Benutzer', icon: Users },
                         { id: 'messages', label: 'Nachrichten', icon: MessageSquare },
                         { id: 'revenue', label: 'Umsatz', icon: DollarSign },
-                        { id: 'ai', label: 'KI-Nutzung', icon: Brain }
+                        { id: 'ai', label: 'KI-Nutzung', icon: Brain },
+                        { id: 'contacts', label: 'Kontakte & Email', icon: Send }
                       ].map((tab) => (
                         <button
                           key={tab.id}
