@@ -458,6 +458,27 @@ const Dashboard = () => {
   const [copySuccess, setCopySuccess] = useState(false);
   const { user, refreshUser } = useAuth();
 
+  // Enhanced Messaging State
+  const [messageMode, setMessageMode] = useState('single'); // 'single', 'bulk', 'template'
+  const [bulkMessages, setBulkMessages] = useState([
+    { title: '', content: '', scheduled_time: '', is_recurring: false, recurring_pattern: '' }
+  ]);
+  const [timeInterval, setTimeInterval] = useState(5);
+  const [templates, setTemplates] = useState({ user_templates: [], public_templates: [] });
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [newTemplate, setNewTemplate] = useState({
+    name: '',
+    title: '',
+    content: '',
+    category: 'general',
+    is_public: false
+  });
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarData, setCalendarData] = useState(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+
   // Fetch messages
   const fetchMessages = async () => {
     try {
