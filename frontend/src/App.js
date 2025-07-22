@@ -2323,6 +2323,363 @@ const Dashboard = () => {
                         </div>
                       </div>
                     )}
+
+                    {selectedAnalyticsTab === 'contacts' && (
+                      <div className="space-y-6">
+                        {contactManagementLoading ? (
+                          <div className="flex items-center justify-center py-12">
+                            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin mr-3" />
+                            <span className="text-gray-600 text-lg">Lade Contact & Email Daten...</span>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Contact & Email Overview Cards */}
+                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-sm text-blue-600 font-medium">Alle Kontakte</p>
+                                    <p className="text-2xl font-bold text-blue-800">
+                                      {contactsOverview?.contacts_overview?.total_contacts || 0}
+                                    </p>
+                                  </div>
+                                  <Users className="w-8 h-8 text-blue-500" />
+                                </div>
+                              </div>
+
+                              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-sm text-green-600 font-medium">Email Zustellungen</p>
+                                    <p className="text-2xl font-bold text-green-800">
+                                      {emailDeliveriesOverview?.delivery_overview?.total_deliveries || 0}
+                                    </p>
+                                  </div>
+                                  <Send className="w-8 h-8 text-green-500" />
+                                </div>
+                              </div>
+
+                              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-sm text-purple-600 font-medium">Erfolgsrate Email</p>
+                                    <p className="text-2xl font-bold text-purple-800">
+                                      {emailDeliveriesOverview?.delivery_overview?.success_rate || 0}%
+                                    </p>
+                                  </div>
+                                  <CheckCircle className="w-8 h-8 text-purple-500" />
+                                </div>
+                              </div>
+
+                              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-sm text-red-600 font-medium">Fehler (24h)</p>
+                                    <p className="text-2xl font-bold text-red-800">
+                                      {emailDeliveriesOverview?.delivery_overview?.recent_failed_24h || 0}
+                                    </p>
+                                  </div>
+                                  <Bell className="w-8 h-8 text-red-500" />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Contact & Email Management Tabs */}
+                            <div className="flex border-b border-gray-200 mb-6">
+                              {[
+                                { id: 'overview', label: 'Übersicht', icon: Eye },
+                                { id: 'contacts', label: 'Alle Kontakte', icon: Users },
+                                { id: 'deliveries', label: 'Email Zustellungen', icon: Send },
+                                { id: 'errors', label: 'Fehler & Probleme', icon: Bell }
+                              ].map((tab) => (
+                                <button
+                                  key={tab.id}
+                                  onClick={() => setSelectedContactTab(tab.id)}
+                                  className={`flex items-center space-x-2 px-6 py-3 border-b-2 font-medium text-sm transition-colors ${
+                                    selectedContactTab === tab.id
+                                      ? 'border-blue-500 text-blue-600'
+                                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                  }`}
+                                >
+                                  <tab.icon className="w-4 h-4" />
+                                  <span>{tab.label}</span>
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* Contact Management Tab Content */}
+                            {selectedContactTab === 'overview' && (
+                              <div className="grid md:grid-cols-2 gap-6">
+                                {/* Contact Types Breakdown */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <Users className="w-5 h-5 mr-2 text-blue-600" />
+                                    Kontakt-Typen
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {contactsOverview?.contacts_overview?.contact_types?.map((type, index) => (
+                                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700 capitalize">{type._id}</span>
+                                        <span className="font-medium text-blue-600">{type.count}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Email Delivery Status */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <Send className="w-5 h-5 mr-2 text-green-600" />
+                                    Email-Zustellstatus
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {emailDeliveriesOverview?.delivery_statuses?.map((status, index) => (
+                                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className={`text-gray-700 capitalize ${
+                                          status._id === 'delivered' ? 'text-green-700' :
+                                          status._id === 'failed' ? 'text-red-700' :
+                                          status._id === 'sent' ? 'text-blue-700' : ''
+                                        }`}>
+                                          {status._id}
+                                        </span>
+                                        <span className="font-medium">{status.count}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Top Users by Contacts */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <Crown className="w-5 h-5 mr-2 text-yellow-600" />
+                                    Top Nutzer (Kontakte)
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {contactsOverview?.contacts_overview?.top_users_by_contacts?.slice(0, 5).map((userStat, index) => (
+                                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                          <p className="font-medium text-gray-800">{userStat.user_name || 'Unknown'}</p>
+                                          <p className="text-sm text-gray-500">{userStat.user_email || ''}</p>
+                                        </div>
+                                        <span className="font-medium text-yellow-600">{userStat.contact_count} Kontakte</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Top Email Senders */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <Send className="w-5 h-5 mr-2 text-purple-600" />
+                                    Top Email-Absender
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {emailDeliveriesOverview?.top_senders?.slice(0, 5).map((sender, index) => (
+                                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                          <p className="font-medium text-gray-800">{sender.user_name || 'Unknown'}</p>
+                                          <p className="text-sm text-gray-500">{sender.user_email || ''}</p>
+                                        </div>
+                                        <span className="font-medium text-purple-600">{sender.email_count} Emails</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedContactTab === 'contacts' && (
+                              <div className="space-y-6">
+                                {/* Search and Filter Controls */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                  <div className="flex items-center space-x-4">
+                                    <div className="flex-1">
+                                      <input
+                                        type="text"
+                                        value={contactSearchTerm}
+                                        onChange={(e) => setContactSearchTerm(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && searchContacts(contactSearchTerm, contactTypeFilter)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="Suche nach Name, Email oder Unternehmen..."
+                                      />
+                                    </div>
+                                    <select
+                                      value={contactTypeFilter}
+                                      onChange={(e) => setContactTypeFilter(e.target.value)}
+                                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    >
+                                      <option value="">Alle Typen</option>
+                                      <option value="personal">Personal</option>
+                                      <option value="business">Business</option>
+                                      <option value="family">Family</option>
+                                    </select>
+                                    <button
+                                      onClick={() => searchContacts(contactSearchTerm, contactTypeFilter)}
+                                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center"
+                                    >
+                                      <Filter className="w-4 h-4 mr-2" />
+                                      Suchen
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* All Contacts List */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <Users className="w-5 h-5 mr-2 text-blue-600" />
+                                    Alle Kontakte ({allContacts.length})
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {allContacts.map((contact, index) => (
+                                      <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                        <div className="flex-1">
+                                          <div className="flex items-center space-x-4">
+                                            <div>
+                                              <p className="font-medium text-gray-800">{contact.name}</p>
+                                              <p className="text-sm text-gray-600">{contact.email}</p>
+                                              {contact.company && (
+                                                <p className="text-sm text-blue-600">{contact.company}</p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                            contact.contact_type === 'business' ? 'bg-blue-100 text-blue-800' :
+                                            contact.contact_type === 'personal' ? 'bg-green-100 text-green-800' :
+                                            'bg-gray-100 text-gray-800'
+                                          }`}>
+                                            {contact.contact_type}
+                                          </span>
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            von: {contact.owner_name || 'Unknown'}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {allContacts.length === 0 && (
+                                      <div className="text-center py-8">
+                                        <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                        <p className="text-gray-500">Keine Kontakte gefunden</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedContactTab === 'deliveries' && (
+                              <div className="space-y-6">
+                                {/* Delivery Filter Controls */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                  <div className="flex items-center space-x-4">
+                                    <select
+                                      value={deliveryStatusFilter}
+                                      onChange={(e) => setDeliveryStatusFilter(e.target.value)}
+                                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    >
+                                      <option value="">Alle Status</option>
+                                      <option value="pending">Ausstehend</option>
+                                      <option value="sent">Gesendet</option>
+                                      <option value="delivered">Zugestellt</option>
+                                      <option value="failed">Fehlgeschlagen</option>
+                                      <option value="opened">Geöffnet</option>
+                                    </select>
+                                    <button
+                                      onClick={() => filterDeliveries(deliveryStatusFilter)}
+                                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center"
+                                    >
+                                      <Filter className="w-4 h-4 mr-2" />
+                                      Filtern
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Recent Deliveries List */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <Send className="w-5 h-5 mr-2 text-green-600" />
+                                    Aktuelle Email-Zustellungen ({recentDeliveries.length})
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {recentDeliveries.map((delivery, index) => (
+                                      <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                        <div className="flex-1">
+                                          <p className="font-medium text-gray-800">{delivery.subject}</p>
+                                          <p className="text-sm text-gray-600">An: {delivery.recipient_email}</p>
+                                          <p className="text-sm text-gray-500">
+                                            Von: {delivery.sender_name || 'Unknown'} ({delivery.sender_email})
+                                          </p>
+                                          {delivery.message_title && (
+                                            <p className="text-sm text-blue-600">Nachricht: {delivery.message_title}</p>
+                                          )}
+                                        </div>
+                                        <div className="text-right">
+                                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                            delivery.delivery_status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                            delivery.delivery_status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                                            delivery.delivery_status === 'failed' ? 'bg-red-100 text-red-800' :
+                                            delivery.delivery_status === 'opened' ? 'bg-purple-100 text-purple-800' :
+                                            'bg-gray-100 text-gray-800'
+                                          }`}>
+                                            {delivery.delivery_status}
+                                          </span>
+                                          {delivery.sent_at && (
+                                            <p className="text-xs text-gray-500 mt-1">
+                                              {new Date(delivery.sent_at).toLocaleString('de-DE')}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {recentDeliveries.length === 0 && (
+                                      <div className="text-center py-8">
+                                        <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                        <p className="text-gray-500">Keine Email-Zustellungen gefunden</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedContactTab === 'errors' && (
+                              <div className="space-y-6">
+                                {/* Recent Email Errors */}
+                                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <Bell className="w-5 h-5 mr-2 text-red-600" />
+                                    Aktuelle Email-Fehler
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {emailDeliveriesOverview?.recent_errors?.map((error, index) => (
+                                      <div key={index} className="p-4 border border-red-200 rounded-lg bg-red-50">
+                                        <div className="flex items-start justify-between">
+                                          <div>
+                                            <p className="font-medium text-red-800">Email-Fehler</p>
+                                            <p className="text-sm text-red-700">An: {error.recipient_email}</p>
+                                            <p className="text-sm text-red-600 mt-2">{error.error_message}</p>
+                                          </div>
+                                          <div className="text-right text-xs text-red-500">
+                                            {error.sent_at && new Date(error.sent_at).toLocaleString('de-DE')}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {(!emailDeliveriesOverview?.recent_errors || emailDeliveriesOverview.recent_errors.length === 0) && (
+                                      <div className="text-center py-8">
+                                        <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                                        <p className="text-gray-500">Keine aktuellen Fehler - Alles läuft gut! ✅</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="text-center py-12">
