@@ -157,6 +157,13 @@ class ScheduledMessageCreate(BaseModel):
     scheduled_time: datetime
     is_recurring: bool = False
     recurring_pattern: Optional[str] = None
+    
+    # Email Delivery Fields
+    delivery_method: str = "in_app"  # in_app, email, sms, both
+    email_subject: Optional[str] = None
+    recipients: List[dict] = []  # Direct recipients
+    selected_contacts: List[str] = []  # Contact IDs
+    selected_contact_lists: List[str] = []  # Contact list IDs
 
 # Enhanced Messaging Models
 class BulkMessageCreate(BaseModel):
