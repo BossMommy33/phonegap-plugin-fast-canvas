@@ -766,6 +766,9 @@ async def register(user: UserCreate):
     
     await db.users.insert_one(new_user.dict())
     
+    # Initialize default contact lists for new user
+    await initialize_default_contact_lists(new_user.id)
+    
     # Give referral bonus (bonus messages) if referred
     if referrer:
         await db.users.update_one(
