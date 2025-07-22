@@ -215,6 +215,63 @@ class MarketingCampaign(BaseModel):
     open_rate: float = 0.0
     click_rate: float = 0.0
 
+# Contact Management Models
+class Contact(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    name: str
+    email: str
+    phone: Optional[str] = None
+    contact_type: str = "personal"  # personal, business, family
+    company: Optional[str] = None
+    position: Optional[str] = None
+    notes: Optional[str] = None
+    tags: List[str] = []
+    is_favorite: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_contacted: Optional[datetime] = None
+
+class ContactList(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    name: str
+    description: Optional[str] = None
+    list_type: str = "personal"  # personal, business, family, custom
+    contacts: List[str] = []  # List of contact IDs
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_default: bool = False
+
+class EmailDelivery(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4))
+    message_id: str
+    user_id: str
+    recipient_email: str
+    recipient_name: str
+    subject: str
+    content: str
+    delivery_status: str = "pending"  # pending, sent, delivered, failed, opened, clicked
+    sent_at: Optional[datetime] = None
+    delivered_at: Optional[datetime] = None
+    opened_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    provider: str = "sendgrid"  # sendgrid, smtp
+    provider_message_id: Optional[str] = None
+
+class ContactCreate(BaseModel):
+    name: str
+    email: str
+    phone: Optional[str] = None
+    contact_type: str = "personal"
+    company: Optional[str] = None
+    position: Optional[str] = None
+    notes: Optional[str] = None
+    tags: List[str] = []
+
+class ContactListCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    list_type: str = "personal"
+
 class MarketingTemplate(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
