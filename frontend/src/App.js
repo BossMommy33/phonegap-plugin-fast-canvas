@@ -1033,20 +1033,72 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Create Message Tab */}
+        {/* Tab Content */}
         {activeTab === 'create' && (
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold text-gray-800">
-                Neue Nachricht erstellen
+                {t('create.title')}
               </h2>
-              <button
-                onClick={() => setShowAiPanel(!showAiPanel)}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
-              >
-                <Wand2 className="w-4 h-4" />
-                <span>AI-Assistent</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowCalendar(!showCalendar)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>Kalender</span>
+                </button>
+                <button
+                  onClick={() => setShowTemplateModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Vorlagen</span>
+                </button>
+                <button
+                  onClick={() => setShowAiPanel(!showAiPanel)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+                >
+                  <Wand2 className="w-4 h-4" />
+                  <span>{t('ai.assistant')}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Message Creation Mode Selector */}
+            <div className="mb-6">
+              <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setMessageMode('single')}
+                  className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors ${
+                    messageMode === 'single'
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4 inline mr-2" />
+                  Einzelnachricht
+                </button>
+                {user?.subscription_plan !== 'free' && (
+                  <button
+                    onClick={() => setMessageMode('bulk')}
+                    className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors ${
+                      messageMode === 'bulk'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    <Archive className="w-4 h-4 inline mr-2" />
+                    Bulk-Nachrichten
+                    <Crown className="w-3 h-3 inline ml-1 text-yellow-500" />
+                  </button>
+                )}
+              </div>
+              {user?.subscription_plan === 'free' && (
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Bulk-Nachrichten sind für Premium- und Business-Nutzer verfügbar
+                </p>
+              )}
             </div>
 
             {/* AI Assistant Panel */}
