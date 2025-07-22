@@ -2412,6 +2412,7 @@ const Dashboard = () => {
               )}
             </div>
           </div>
+        )}
 
         {/* Referral Tab */}
         {activeTab === 'referral' && (
