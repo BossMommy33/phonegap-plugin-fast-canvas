@@ -1189,35 +1189,172 @@ const Dashboard = () => {
                 <div className="flex items-center space-x-2">
                   <Bell className="w-5 h-5 text-yellow-600" />
                   <div>
-                    <p className="font-medium text-yellow-800">Nachrichtenlimit erreicht</p>
+                    <p className="font-medium text-yellow-800">{t('message.limitReached')}</p>
                     <p className="text-sm text-yellow-700">
-                      Sie haben Ihr monatliches Limit von {user.monthly_messages_limit} Nachrichten erreicht. 
-                      Upgraden Sie auf Premium für unbegrenzte Nachrichten.
+                      {t('message.upgradeRequired', { limit: user.monthly_messages_limit })}
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            <form onSubmit={createMessage} className="space-y-6">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Titel
+            {/* Single Message Form */}
+            {messageMode === 'single' && (
+              <form onSubmit={createMessage} className="space-y-6">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('create.messageTitle')}
+                    </label>
+                    {formData.title && (
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const enhanced = await enhanceMessageWithAI(formData.title, "improve");
+                            if (enhanced) setFormData({...formData, title: enhanced});
+                          }}
+                          className="text-xs text-purple-600 hover:text-purple-800 flex items-center space-x-1"
+                        >
+                          <Wand2 className="w-3 h-3" />
+                          <span>{t('ai.improve')}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const enhanced = await enhanceMessageWithAI(formData.title, "correct");
+                            if (enhanced) setFormData({...formData, title: enhanced});
+                          }}
+                          className="text-xs text-green-600 hover:text-green-800 flex items-center space-x-1"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>{t('ai.correct')}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder={t('create.titlePlaceholder')}
+                    required
+                    disabled={loading || isAtMessageLimit}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('create.messageContent')}
+                    </label>
+                    {formData.content && (
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const enhanced = await enhanceMessageWithAI(formData.content, "improve");
+                            if (enhanced) setFormData({...formData, content: enhanced});
+                          }}
+                          className="text-xs text-purple-600 hover:text-purple-800 flex items-center space-x-1"
+                        >
+                          <Wand2 className="w-3 h-3" />
+                          <span>{t('ai.improve')}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const enhanced = await enhanceMessageWithAI(formData.content, "correct");
+                            if (enhanced) setFormData({...formData, content: enhanced});
+                          }}
+                          className="text-xs text-green-600 hover:text-green-800 flex items-center space-x-1"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>{t('ai.correct')}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <textarea
+                    value={formData.content}
+                    onChange={(e) => setFormData({...formData, content: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder={t('create.contentPlaceholder')}
+                    rows="6"
+                    required
+                    disabled={loading || isAtMessageLimit}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('create.scheduledTime')}
                   </label>
-                  {formData.title && (
-                    <div className="flex space-x-2">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const enhanced = await enhanceMessageWithAI(formData.title, "improve");
-                          if (enhanced) setFormData({...formData, title: enhanced});
-                        }}
-                        className="text-xs text-purple-600 hover:text-purple-800 flex items-center space-x-1"
-                      >
-                        <Wand2 className="w-3 h-3" />
-                        <span>Verbessern</span>
-                      </button>
+                  <input
+                    type="datetime-local"
+                    value={formData.scheduled_time}
+                    onChange={(e) => setFormData({...formData, scheduled_time: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                    disabled={loading || isAtMessageLimit}
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
+
+                {user?.subscription_plan !== 'free' && (
+                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Repeat className="w-4 h-4 text-green-600" />
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_recurring}
+                          onChange={(e) => setFormData({...formData, is_recurring: e.target.checked})}
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                          disabled={loading}
+                        />
+                        <span className="text-sm font-medium text-gray-700">{t('create.recurring')}</span>
+                      </label>
+                      <Crown className="w-4 h-4 text-yellow-500" />
+                    </div>
+                    
+                    {formData.is_recurring && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-2">
+                          {t('create.recurringInterval')}
+                        </label>
+                        <select
+                          value={formData.recurring_pattern}
+                          onChange={(e) => setFormData({...formData, recurring_pattern: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                          disabled={loading}
+                        >
+                          <option value="">{t('create.recurringInterval')}...</option>
+                          <option value="daily">{t('create.recurringDaily')}</option>
+                          <option value="weekly">{t('create.recurringWeekly')}</option>
+                          <option value="monthly">{t('create.recurringMonthly')}</option>
+                        </select>
+                      </div>
+                    )}
+                    
+                    {user?.subscription_plan === 'free' && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        {t('create.recurringNotice')}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || isAtMessageLimit}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {loading ? t('create.submitting') : t('create.submitButton')}
+                </button>
+              </form>
+            )}
                     </div>
                   )}
                 </div>
