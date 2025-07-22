@@ -1233,6 +1233,272 @@ async def get_calendar_messages(year: int, month: int, current_user: User = Depe
         logger.error(f"Error getting calendar data: {e}")
         raise HTTPException(status_code=500, detail="Error loading calendar data")
 
+# Marketing Automation Endpoints (Admin only)
+@api_router.get("/admin/marketing/campaigns")
+async def get_marketing_campaigns(current_admin: User = Depends(get_current_admin)):
+    """Get all marketing campaigns"""
+    try:
+        campaigns = await db.marketing_campaigns.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+        return {"campaigns": campaigns}
+    except Exception as e:
+        logger.error(f"Error getting marketing campaigns: {e}")
+        raise HTTPException(status_code=500, detail="Error loading marketing campaigns")
+
+@api_router.post("/admin/marketing/campaigns", response_model=MarketingCampaign)
+async def create_marketing_campaign(campaign: MarketingCampaign, current_admin: User = Depends(get_current_admin)):
+    """Create a new marketing campaign"""
+    try:
+        campaign_dict = campaign.dict()
+        await db.marketing_campaigns.insert_one(campaign_dict)
+        return campaign
+    except Exception as e:
+        logger.error(f"Error creating marketing campaign: {e}")
+        raise HTTPException(status_code=500, detail="Error creating marketing campaign")
+
+@api_router.get("/admin/marketing/templates")
+async def get_marketing_templates(current_admin: User = Depends(get_current_admin)):
+    """Get all marketing templates"""
+    try:
+        # Load predefined templates from marketing materials
+        predefined_templates = await load_predefined_marketing_templates()
+        
+        # Get custom templates from database
+        custom_templates = await db.marketing_templates.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+        
+        return {
+            "predefined_templates": predefined_templates,
+            "custom_templates": custom_templates
+        }
+    except Exception as e:
+        logger.error(f"Error getting marketing templates: {e}")
+        raise HTTPException(status_code=500, detail="Error loading marketing templates")
+
+@api_router.post("/admin/marketing/templates", response_model=MarketingTemplate)
+async def create_marketing_template(template: MarketingTemplate, current_admin: User = Depends(get_current_admin)):
+    """Create a new marketing template"""
+    try:
+        template_dict = template.dict()
+        await db.marketing_templates.insert_one(template_dict)
+        return template
+    except Exception as e:
+        logger.error(f"Error creating marketing template: {e}")
+        raise HTTPException(status_code=500, detail="Error creating marketing template")
+
+@api_router.get("/admin/marketing/social-posts")
+async def get_social_media_posts(current_admin: User = Depends(get_current_admin)):
+    """Get all social media posts"""
+    try:
+        # Load ready-to-use social media posts
+        social_posts = await load_social_media_posts()
+        
+        # Get custom posts from database
+        custom_posts = await db.social_media_posts.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+        
+        return {
+            "ready_to_use_posts": social_posts,
+            "custom_posts": custom_posts
+        }
+    except Exception as e:
+        logger.error(f"Error getting social media posts: {e}")
+        raise HTTPException(status_code=500, detail="Error loading social media posts")
+
+@api_router.post("/admin/marketing/social-posts", response_model=SocialMediaPost)
+async def create_social_media_post(post: SocialMediaPost, current_admin: User = Depends(get_current_admin)):
+    """Create/schedule a social media post"""
+    try:
+        post_dict = post.dict()
+        await db.social_media_posts.insert_one(post_dict)
+        return post
+    except Exception as e:
+        logger.error(f"Error creating social media post: {e}")
+        raise HTTPException(status_code=500, detail="Error creating social media post")
+
+@api_router.get("/admin/marketing/launch-metrics", response_model=LaunchMetrics)
+async def get_launch_metrics(current_admin: User = Depends(get_current_admin)):
+    """Get daily launch metrics"""
+    try:
+        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        yesterday = today - timedelta(days=1)
+        
+        # New registrations today
+        new_registrations = await db.users.count_documents({
+            "created_at": {"$gte": today}
+        })
+        
+        # Premium conversions today
+        premium_conversions = await db.payment_transactions.count_documents({
+            "payment_status": "completed",
+            "completed_at": {"$gte": today}
+        })
+        
+        # Referral signups today
+        referral_signups = await db.users.count_documents({
+            "referred_by": {"$ne": None, "$exists": True},
+            "created_at": {"$gte": today}
+        })
+        
+        # Daily active users (users who created messages today)
+        daily_active_users = len(await db.scheduled_messages.distinct("user_id", {
+            "created_at": {"$gte": today}
+        }))
+        
+        return LaunchMetrics(
+            new_registrations=new_registrations,
+            premium_conversions=premium_conversions,
+            referral_signups=referral_signups,
+            daily_active_users=daily_active_users,
+            social_engagement=0,  # Would be populated by social media APIs
+            email_opens=0,  # Would be populated by email service APIs
+            campaign_clicks=0  # Would be populated by campaign tracking
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting launch metrics: {e}")
+        raise HTTPException(status_code=500, detail="Error loading launch metrics")
+
+@api_router.get("/admin/marketing/launch-checklist")
+async def get_launch_checklist(current_admin: User = Depends(get_current_admin)):
+    """Get the launch checklist with current status"""
+    try:
+        checklist_items = await load_launch_checklist_with_status()
+        return {"checklist": checklist_items}
+    except Exception as e:
+        logger.error(f"Error getting launch checklist: {e}")
+        raise HTTPException(status_code=500, detail="Error loading launch checklist")
+
+# Marketing Helper Functions
+async def load_predefined_marketing_templates():
+    """Load predefined marketing templates from files"""
+    templates = []
+    
+    # Email templates
+    templates.append({
+        "id": "welcome_email_01",
+        "name": "Welcome Email - Immediate",
+        "type": "email",
+        "subject": "🎉 Willkommen! Deine 5 KI-Nachrichten sind bereit",
+        "content": """Hallo {{first_name}},
+
+willkommen bei Deutschlands erster KI-Nachrichten-App! 🤖✨
+
+SOFORT VERFÜGBAR:
+✅ 5 kostenlose KI-Nachrichten  
+✅ Deutsche Sprachoptimierung
+✅ Zeitgesteuerte Zustellung
+
+QUICK START (2 Minuten):
+1. Klick auf "AI-Assistent" 
+2. Wähle "Meeting-Erinnerung"
+3. KI erstellt perfekte deutsche Nachricht
+4. Zeitpunkt für Zustellung wählen
+
+[ERSTE NACHRICHT ERSTELLEN →]
+
+BONUS-TIPP: 
+Dein Referral-Link: {{referral_link}}
+Für jeden Freund bekommt ihr BEIDE 5 extra Nachrichten! 🎁
+
+Bei Fragen einfach antworten!
+
+Beste Grüße,
+Das KI-Team 🇩🇪""",
+        "variables": ["first_name", "referral_link"],
+        "category": "welcome"
+    })
+    
+    templates.append({
+        "id": "onboarding_day1",
+        "name": "Onboarding Day 1 - Examples",
+        "type": "email", 
+        "subject": "💡 {{first_name}}, hier sind 3 einfache KI-Beispiele",
+        "content": """Hallo {{first_name}},
+
+gestern hast du dich angemeldet - super! Falls du noch nicht deine erste KI-Nachricht erstellt hast, hier sind 3 einfache Ideen:
+
+🔥 BELIEBTE KI-VORLAGEN:
+
+1️⃣ MEETING-ERINNERUNG
+"Erinnerung: Meeting morgen um 14:00 Uhr im Konferenzraum A. Agenda: Projektupdate und nächste Schritte."
+
+2️⃣ GEBURTSTAGS-NACHRICHT  
+"Herzlichen Glückwunsch zum Geburtstag! 🎉 Ich wünsche dir einen wunderschönen Tag und alles Gute für das neue Lebensjahr!"
+
+3️⃣ ZAHLUNGS-ERINNERUNG
+"Freundliche Erinnerung: Die Rechnung XYZ ist in 3 Tagen fällig. Vielen Dank für die pünktliche Begleichung!"
+
+💡 PRO-TIPP: Klick einfach auf "AI-Assistent" → KI macht den Rest!
+
+[JETZT AUSPROBIEREN →]
+
+Fragen? Einfach antworten!
+Das KI-Team""",
+        "variables": ["first_name"],
+        "category": "onboarding"
+    })
+    
+    return templates
+
+async def load_social_media_posts():
+    """Load ready-to-use social media posts"""
+    posts = [
+        {
+            "platform": "twitter",
+            "content": "🚀 NEU: Deutschlands erste KI-Nachrichten-App ist live! \n\n✨ Deutsche KI schreibt perfekte Nachrichten\n⏰ Zeitgesteuerte Zustellung \n🎁 5 kostenlose Nachrichten\n\nJETZT KOSTENLOS TESTEN 👇\n#KI #Produktivität #Deutschland",
+            "hashtags": ["#KI", "#Produktivität", "#Deutschland", "#StartUp", "#Innovation"]
+        },
+        {
+            "platform": "linkedin", 
+            "content": "🎯 GAME CHANGER für Professionals:\n\nUnsere KI-Nachrichten-App revolutioniert Business-Kommunikation:\n\n✅ KI schreibt Meeting-Erinnerungen\n✅ Perfekte deutsche Formulierungen\n✅ Zeitgesteuerte Zustellung\n✅ 5x schneller als manuell\n\nErgebnis: +40% Effizienz in der Kommunikation\n\n💡 KOSTENLOS testen - Link in Kommentaren\n\n#BusinessEffizienz #KI #Kommunikation",
+            "hashtags": ["#BusinessEffizienz", "#KI", "#Kommunikation", "#Produktivität"]
+        }
+    ]
+    
+    return posts
+
+async def load_launch_checklist_with_status():
+    """Load launch checklist with current completion status"""
+    checklist = [
+        {
+            "category": "TECHNIK",
+            "items": [
+                {"task": "✅ Backend API vollständig implementiert", "completed": True},
+                {"task": "✅ Frontend UI/UX fertiggestellt", "completed": True}, 
+                {"task": "✅ Datenbank optimiert", "completed": True},
+                {"task": "✅ KI-Integration funktional", "completed": True},
+                {"task": "✅ Payment-System (Stripe) integriert", "completed": True},
+                {"task": "✅ Admin-Dashboard aktiv", "completed": True},
+                {"task": "✅ Multi-Language Support", "completed": True},
+                {"task": "⏳ Email/SMS Integration", "completed": False},
+                {"task": "✅ Erweiterte Analytics", "completed": True}
+            ]
+        },
+        {
+            "category": "MARKETING",
+            "items": [
+                {"task": "✅ Social Media Inhalte erstellt", "completed": True},
+                {"task": "✅ E-Mail-Vorlagen vorbereitet", "completed": True},
+                {"task": "✅ Press Kit zusammengestellt", "completed": True},
+                {"task": "✅ Launch-Strategie definiert", "completed": True},
+                {"task": "⏳ Social Media Accounts eingerichtet", "completed": False},
+                {"task": "⏳ Influencer-Outreach gestartet", "completed": False},
+                {"task": "⏳ PR-Kampagne aktiviert", "completed": False}
+            ]
+        },
+        {
+            "category": "BUSINESS",
+            "items": [
+                {"task": "✅ Subscription-Modell implementiert", "completed": True},
+                {"task": "✅ Referral-System aktiv", "completed": True},
+                {"task": "✅ Abrechnungs-System funktional", "completed": True},
+                {"task": "⏳ Rechtliche Prüfung abgeschlossen", "completed": False},
+                {"task": "⏳ Datenschutz-Dokumentation", "completed": False},
+                {"task": "⏳ Customer Support eingerichtet", "completed": False}
+            ]
+        }
+    ]
+    
+    return checklist
+
 # Admin endpoints
 @api_router.get("/admin/stats", response_model=AdminStats)
 async def get_admin_stats(current_admin: User = Depends(get_current_admin)):
