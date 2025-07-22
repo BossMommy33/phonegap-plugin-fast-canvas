@@ -1040,14 +1040,108 @@ async def create_scheduled_message(message: ScheduledMessageCreate, current_user
             detail="Recurring messages are only available for Premium and Business subscribers"
         )
     
-    message_dict = message.dict()
-    message_obj = ScheduledMessage(user_id=current_user.id, **message_dict)
-    await db.scheduled_messages.insert_one(message_obj.dict())
-    
-    # Increment message count
-    await increment_message_count(current_user.id)
-    
-    return ScheduledMessageResponse(**message_obj.dict())
+    try:
+        # Process recipients from contacts and contact lists
+        all_recipients = []
+        
+        # Add direct recipients
+        all_recipients.extend(message.recipients)
+        
+        # Add recipients from selected contacts
+        if message.selected_contacts:
+            contacts = await db.contacts.find({
+                "user_id": current_user.id,
+                "id": {"$in": message.selected_contacts}
+            }, {"_id": 0}).to_list(1000)
+            
+            for contact in contacts:
+                all_recipients.append({
+                    "email": contact["email"],
+                    "name": contact["name"],
+                    "type": "contact",
+                    "contact_id": contact["id"]
+                })
+        
+        # Add recipients from contact lists
+        if message.selected_contact_lists:
+            contact_lists = await db.contact_lists.find({
+                "user_id": current_user.id,
+                "id": {"$in": message.selected_contact_lists}
+            }, {"_id": 0}).to_list(1000)
+            
+            for contact_list in contact_lists:
+                if contact_list.get("contacts"):
+                    list_contacts = await db.contacts.find({
+                        "user_id": current_user.id,
+                        "id": {"$in": contact_list["contacts"]}
+                    }, {"_id": 0}).to_list(1000)
+                    
+                    for contact in list_contacts:
+                        # Avoid duplicates
+                        if not any(r.get("email") == contact["email"] for r in all_recipients):
+                            all_recipients.append({
+                                "email": contact["email"],
+                                "name": contact["name"],
+                                "type": "contact_list",
+                                "contact_id": contact["id"],
+                                "list_id": contact_list["id"],
+                                "list_name": contact_list["name"]
+                            })
+        
+        # Create the message with enhanced fields
+        message_dict = message.dict()
+        message_obj = ScheduledMessage(
+            user_id=current_user.id,
+            delivery_method=message.delivery_method,
+            email_subject=message.email_subject or message.title,
+            recipients=all_recipients,
+            selected_contacts=message.selected_contacts,
+            selected_contact_lists=message.selected_contact_lists,
+            total_recipients=len(all_recipients),
+            sender_email=current_user.email,
+            **{k: v for k, v in message_dict.items() if k not in ['delivery_method', 'email_subject', 'recipients', 'selected_contacts', 'selected_contact_lists']}
+        )
+        
+        await db.scheduled_messages.insert_one(message_obj.dict())
+        
+        # Increment message count
+        await increment_message_count(current_user.id)
+        
+        # If delivery method includes email, create email delivery records
+        if message.delivery_method in ["email", "both"] and all_recipients:
+            await create_email_delivery_records(message_obj, current_user)
+        
+        return ScheduledMessageResponse(**message_obj.dict())
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating message: {e}")
+        raise HTTPException(status_code=500, detail="Error creating message")
+
+# Helper function to create email delivery records
+async def create_email_delivery_records(message: ScheduledMessage, user: User):
+    """Create email delivery records for tracking"""
+    try:
+        delivery_records = []
+        
+        for recipient in message.recipients:
+            delivery_record = EmailDelivery(
+                message_id=message.id,
+                user_id=user.id,
+                recipient_email=recipient["email"],
+                recipient_name=recipient["name"],
+                subject=message.email_subject,
+                content=f"{message.title}\n\n{message.content}",
+                delivery_status="pending"
+            )
+            delivery_records.append(delivery_record.dict())
+        
+        if delivery_records:
+            await db.email_deliveries.insert_many(delivery_records)
+            
+    except Exception as e:
+        logger.error(f"Error creating email delivery records: {e}")
 
 @api_router.get("/messages", response_model=List[ScheduledMessageResponse])
 async def get_scheduled_messages(current_user: User = Depends(get_current_user)):
