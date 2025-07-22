@@ -723,6 +723,60 @@ const Dashboard = () => {
     }
   };
 
+  // Marketing Automation Functions
+  const fetchMarketingData = async () => {
+    if (user?.role !== 'admin') return;
+    
+    setMarketingLoading(true);
+    try {
+      // Fetch all marketing data in parallel
+      const [campaignsRes, templatesRes, postsRes, metricsRes, checklistRes] = await Promise.all([
+        axios.get(`${API}/admin/marketing/campaigns`),
+        axios.get(`${API}/admin/marketing/templates`),
+        axios.get(`${API}/admin/marketing/social-posts`),
+        axios.get(`${API}/admin/marketing/launch-metrics`),
+        axios.get(`${API}/admin/marketing/launch-checklist`)
+      ]);
+      
+      setMarketingCampaigns(campaignsRes.data.campaigns || []);
+      setMarketingTemplates(templatesRes.data);
+      setSocialPosts(postsRes.data);
+      setLaunchMetrics(metricsRes.data);
+      setLaunchChecklist(checklistRes.data.checklist || []);
+      
+    } catch (error) {
+      console.error('Error fetching marketing data:', error);
+    } finally {
+      setMarketingLoading(false);
+    }
+  };
+
+  const createMarketingCampaign = async (campaignData) => {
+    if (user?.role !== 'admin') return;
+    
+    try {
+      await axios.post(`${API}/admin/marketing/campaigns`, campaignData);
+      fetchMarketingData(); // Refresh data
+      alert('Marketing-Kampagne erfolgreich erstellt!');
+    } catch (error) {
+      console.error('Error creating marketing campaign:', error);
+      alert('Fehler beim Erstellen der Kampagne');
+    }
+  };
+
+  const scheduleSocialPost = async (postData) => {
+    if (user?.role !== 'admin') return;
+    
+    try {
+      await axios.post(`${API}/admin/marketing/social-posts`, postData);
+      fetchMarketingData(); // Refresh data
+      alert('Social Media Post erfolgreich geplant!');
+    } catch (error) {
+      console.error('Error scheduling social post:', error);
+      alert('Fehler beim Planen des Posts');
+    }
+  };
+
   // Copy referral link
   const copyReferralLink = async () => {
     if (referralData?.referral_link) {
