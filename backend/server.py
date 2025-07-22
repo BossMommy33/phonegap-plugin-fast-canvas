@@ -129,11 +129,27 @@ class ScheduledMessage(BaseModel):
     content: str
     scheduled_time: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    status: str = "scheduled"  # scheduled, delivered, failed
     delivered_at: Optional[datetime] = None
+    status: str = "scheduled"  # scheduled, delivered, failed
     is_recurring: bool = False
-    recurring_pattern: Optional[str] = None  # daily, weekly, monthly
-    next_occurrence: Optional[datetime] = None
+    recurring_pattern: Optional[str] = None
+    
+    # Email Delivery Fields
+    recipients: List[dict] = []  # [{"email": "test@example.com", "name": "Test User", "type": "contact"}]
+    delivery_method: str = "in_app"  # in_app, email, sms, both
+    email_subject: Optional[str] = None
+    sender_email: Optional[str] = None
+    
+    # Contact Integration
+    selected_contacts: List[str] = []  # List of contact IDs
+    selected_contact_lists: List[str] = []  # List of contact list IDs
+    
+    # Delivery Tracking
+    total_recipients: int = 0
+    delivered_count: int = 0
+    failed_count: int = 0
+    opened_count: int = 0
+    delivery_errors: List[str] = []
 
 class ScheduledMessageCreate(BaseModel):
     title: str
