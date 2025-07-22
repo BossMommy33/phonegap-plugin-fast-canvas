@@ -1081,6 +1081,7 @@ const Dashboard = () => {
       fetchAdminData();
       fetchAdvancedAnalytics();
       fetchMarketingData();
+      fetchContactManagementData();
     }
     
     // Refresh messages every 10 seconds to show delivered messages
