@@ -594,6 +594,126 @@ const Dashboard = () => {
     }
   };
 
+  // Enhanced Messaging Functions
+  const fetchTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const response = await axios.get(`${API}/templates`);
+      setTemplates(response.data);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      setTemplates({ user_templates: [], public_templates: [] });
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
+
+  const createTemplate = async (templateData) => {
+    try {
+      await axios.post(`${API}/templates`, templateData);
+      fetchTemplates(); // Refresh templates list
+      setShowTemplateModal(false);
+      setNewTemplate({ name: '', title: '', content: '', category: 'general', is_public: false });
+      alert(t ? t('message.templateCreated') : 'Template erfolgreich erstellt!');
+    } catch (error) {
+      console.error('Error creating template:', error);
+      alert(t ? t('message.error') : 'Fehler beim Erstellen der Vorlage');
+    }
+  };
+
+  const useTemplate = async (templateId) => {
+    try {
+      const response = await axios.post(`${API}/templates/${templateId}/use`);
+      const templateData = response.data;
+      
+      if (messageMode === 'bulk') {
+        // Add template data to first bulk message
+        setBulkMessages(prev => prev.map((msg, index) => 
+          index === 0 
+            ? { ...msg, title: templateData.title, content: templateData.content }
+            : msg
+        ));
+      } else {
+        // Single message mode
+        setFormData(prev => ({
+          ...prev,
+          title: templateData.title,
+          content: templateData.content
+        }));
+      }
+      
+      alert(t ? t('message.templateUsed') : 'Vorlage angewendet!');
+    } catch (error) {
+      console.error('Error using template:', error);
+      alert(t ? t('message.error') : 'Fehler beim Verwenden der Vorlage');
+    }
+  };
+
+  const createBulkMessages = async () => {
+    if (!user) return;
+    
+    if (user.subscription_plan === 'free') {
+      alert(t ? t('message.bulkRequiresPremium') : 'Bulk-Nachrichten sind nur für Premium- und Business-Nutzer verfügbar.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const bulkRequest = {
+        messages: bulkMessages.filter(msg => msg.title && msg.content && msg.scheduled_time),
+        time_interval: timeInterval
+      };
+
+      if (bulkRequest.messages.length === 0) {
+        alert(t ? t('message.fillAllFields') : 'Bitte füllen Sie alle erforderlichen Felder aus.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.post(`${API}/messages/bulk`, bulkRequest);
+      
+      alert(t ? t('message.bulkCreated', { count: response.data.success_count }) : 
+            `${response.data.success_count} Nachrichten erfolgreich erstellt!`);
+      
+      // Reset form
+      setBulkMessages([{ title: '', content: '', scheduled_time: '', is_recurring: false, recurring_pattern: '' }]);
+      setMessageMode('single');
+      fetchMessages();
+      refreshUser();
+    } catch (error) {
+      console.error('Error creating bulk messages:', error);
+      alert(error.response?.data?.detail || (t ? t('message.error') : 'Fehler beim Erstellen der Nachrichten'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addBulkMessage = () => {
+    setBulkMessages(prev => [...prev, {
+      title: '', content: '', scheduled_time: '', is_recurring: false, recurring_pattern: ''
+    }]);
+  };
+
+  const removeBulkMessage = (index) => {
+    setBulkMessages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateBulkMessage = (index, field, value) => {
+    setBulkMessages(prev => prev.map((msg, i) => 
+      i === index ? { ...msg, [field]: value } : msg
+    ));
+  };
+
+  const fetchCalendarData = async (year, month) => {
+    try {
+      const response = await axios.get(`${API}/messages/calendar/${year}/${month}`);
+      setCalendarData(response.data);
+    } catch (error) {
+      console.error('Error fetching calendar data:', error);
+      setCalendarData(null);
+    }
+  };
+
   // Copy referral link
   const copyReferralLink = async () => {
     if (referralData?.referral_link) {
