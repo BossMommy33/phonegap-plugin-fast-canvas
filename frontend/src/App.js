@@ -488,6 +488,17 @@ const Dashboard = () => {
   const [marketingLoading, setMarketingLoading] = useState(false);
   const [selectedMarketingTab, setSelectedMarketingTab] = useState('overview');
 
+  // Contact & Email Delivery Management State
+  const [contactsOverview, setContactsOverview] = useState(null);
+  const [emailDeliveriesOverview, setEmailDeliveriesOverview] = useState(null);
+  const [allContacts, setAllContacts] = useState([]);
+  const [recentDeliveries, setRecentDeliveries] = useState([]);
+  const [contactManagementLoading, setContactManagementLoading] = useState(false);
+  const [selectedContactTab, setSelectedContactTab] = useState('overview');
+  const [contactSearchTerm, setContactSearchTerm] = useState('');
+  const [contactTypeFilter, setContactTypeFilter] = useState('');
+  const [deliveryStatusFilter, setDeliveryStatusFilter] = useState('');
+
   // Fetch messages
   const fetchMessages = async () => {
     try {
