@@ -1355,19 +1355,136 @@ const Dashboard = () => {
                 </button>
               </form>
             )}
-                    </div>
-                  )}
+
+            {/* Bulk Messages Form */}
+            {messageMode === 'bulk' && (
+              <div className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Archive className="w-5 h-5 text-blue-600" />
+                    <h3 className="font-semibold text-blue-800">Bulk-Nachrichten erstellen</h3>
+                    <Crown className="w-4 h-4 text-yellow-500" />
+                  </div>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Erstellen Sie mehrere Nachrichten gleichzeitig mit automatischen Zeitintervallen.
+                  </p>
+                  <div className="flex items-center space-x-4">
+                    <label className="text-sm font-medium text-blue-800">
+                      Zeitintervall zwischen Nachrichten:
+                    </label>
+                    <select
+                      value={timeInterval}
+                      onChange={(e) => setTimeInterval(parseInt(e.target.value))}
+                      className="px-3 py-1 border border-blue-300 rounded bg-white text-sm"
+                    >
+                      <option value={1}>1 Minute</option>
+                      <option value={5}>5 Minuten</option>
+                      <option value={10}>10 Minuten</option>
+                      <option value={15}>15 Minuten</option>
+                      <option value={30}>30 Minuten</option>
+                      <option value={60}>1 Stunde</option>
+                    </select>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Gib deiner Nachricht einen Titel..."
-                  required
-                  disabled={isAtMessageLimit}
-                />
+
+                {bulkMessages.map((message, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium text-gray-800">Nachricht {index + 1}</h4>
+                      {bulkMessages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeBulkMessage(index)}
+                          className="text-red-600 hover:text-red-800 text-sm flex items-center space-x-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Entfernen</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Titel
+                        </label>
+                        <input
+                          type="text"
+                          value={message.title}
+                          onChange={(e) => updateBulkMessage(index, 'title', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Nachrichtentitel..."
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Geplante Zeit
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={message.scheduled_time}
+                          onChange={(e) => updateBulkMessage(index, 'scheduled_time', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          required
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nachrichteninhalt
+                      </label>
+                      <textarea
+                        value={message.content}
+                        onChange={(e) => updateBulkMessage(index, 'content', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Nachrichteninhalt..."
+                        rows="4"
+                        required
+                      />
+                    </div>
+
+                    <div className="mt-3 flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={message.is_recurring}
+                        onChange={(e) => updateBulkMessage(index, 'is_recurring', e.target.checked)}
+                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        disabled={loading}
+                      />
+                      <label className="text-sm text-gray-700">Wiederkehrende Nachricht</label>
+                      <Crown className="w-3 h-3 text-yellow-500" />
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={addBulkMessage}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Weitere Nachricht hinzufügen</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={createBulkMessages}
+                    disabled={loading}
+                    className="flex items-center space-x-2 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <Archive className="w-4 h-4" />
+                    <span>{loading ? 'Wird erstellt...' : 'Bulk-Nachrichten erstellen'}</span>
+                  </button>
+                </div>
               </div>
+            )}
+          </div>
+        )}
               
               <div>
                 <div className="flex items-center justify-between mb-2">
