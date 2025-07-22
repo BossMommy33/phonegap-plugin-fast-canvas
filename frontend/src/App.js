@@ -2535,50 +2535,7 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                {selectedMarketingTab === 'campaigns' && (
-                  <div className="space-y-6">
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-lg font-semibold text-gray-800 flex items-center">
-                          <Send className="w-5 h-5 mr-2 text-green-600" />
-                          Marketing Kampagnen ({marketingCampaigns.length})
-                        </h4>
-                        <button className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors">
-                          + Neue Kampagne
-                        </button>
-                      </div>
-                      
-                      {marketingCampaigns.length > 0 ? (
-                        <div className="space-y-3">
-                          {marketingCampaigns.map((campaign, index) => (
-                            <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h5 className="font-medium text-gray-800">{campaign.name}</h5>
-                                  <p className="text-sm text-gray-600 capitalize">
-                                    {campaign.type} • {campaign.target_audience.replace('_', ' ')} • {campaign.status}
-                                  </p>
-                                </div>
-                                <div className="text-right text-sm text-gray-500">
-                                  <p>Gesendet: {campaign.sent_count}</p>
-                                  <p>Öffnungsrate: {campaign.open_rate}%</p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <Send className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                          <p className="text-gray-500">Noch keine Kampagnen erstellt</p>
-                          <button className="mt-4 px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors">
-                            Erste Kampagne erstellen
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+
 
                 {selectedMarketingTab === 'templates' && (
                   <div className="space-y-6">
