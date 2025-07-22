@@ -1014,14 +1014,17 @@ async def create_bulk_messages(bulk_request: BulkMessageCreate, current_user: Us
 async def get_message_templates(current_user: User = Depends(get_current_user)):
     """Get user's message templates and public templates"""
     try:
-        # Get user's private templates
-        user_templates = await db.message_templates.find({"user_id": current_user.id}).sort("created_at", -1).to_list(1000)
+        # Get user's private templates (exclude MongoDB _id field)
+        user_templates = await db.message_templates.find(
+            {"user_id": current_user.id}, 
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(1000)
         
         # Get public templates (created by other users and marked as public)
         public_templates = await db.message_templates.find({
             "is_public": True,
             "user_id": {"$ne": current_user.id}
-        }).sort("usage_count", -1).to_list(50)
+        }, {"_id": 0}).sort("usage_count", -1).to_list(50)
         
         return {
             "user_templates": user_templates,
